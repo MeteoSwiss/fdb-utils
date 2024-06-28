@@ -1,0 +1,12 @@
+main:
+  definitions:
+    cosmo_eccodes: /src/eccodes-cosmo-resources/definitions
+    eccodes: /src/eccodes/definitions
+  local:
+    root: /scratch/mch/vcherkas/fdb-root-realtime
+    schema: /scratch/mch/vcherkas/fdb-setup/fdb-schema
+  remote:
+    hostname: balfrin-ln003.cscs.ch
+    port: 30005
+  fdb_home: /scratch/mch/vcherkas/spack-view
+  

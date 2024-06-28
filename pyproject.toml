@@ -18,8 +18,14 @@ name = "pypi-mch-publish"
 # only hub entrypoint can be used for publishing libraries (accessible from CI/CD server)
 url = "https://hub.meteoswiss.ch/nexus/repository/python-mch/"
 
+[tool.poetry.scripts]
+fdb-utils = "fdb_utils.main:app"
+
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
+typer = "^0.12.3"
+eccodes = "^1.7.1"
+pyfdb = { git = "https://github.com/ecmwf/pyfdb.git", branch = "master" }
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.6.1"

@@ -126,15 +126,23 @@ pipeline {
         }
 
         stage('Release') {
-            when { expression { params.RELEASE_BUILD } }
+            when { expression { Globals.release } }
             steps {
                 echo 'Build a wheel and publish'
-                script {
-                    withCredentials([string(credentialsId: "python-mch-nexus-secret", variable: 'PIP_PWD')]) {
-                        runDevScript("build/poetry-lib-release.sh ${env.PIP_USER} $PIP_PWD 3.11")
-                        Globals.version = sh(script: 'git describe --tags --abbrev=0', returnStdout: true).trim()
-                        Globals.documentationTag = Globals.version
-                        env.TAG_NAME = Globals.documentationTag
+                withCredentials([usernamePassword(
+                                    credentialsId: 'github app credential for the meteoswiss-apn github organization',
+                                    passwordVariable: 'GITHUB_ACCESS_TOKEN', 
+                                    usernameVariable: 'GITHUB_APP')
+                            ]) {
+                    script {
+
+                        sh "git remote set-url origin https://${GITHUB_APP}:${GITHUB_ACCESS_TOKEN}@github.com/MeteoSwiss-APN/fdb-data-poller"
+                        
+                        withCredentials([string(credentialsId: "python-mch-nexus-secret", variable: 'PIP_PWD')]) {
+                            runDevScript("build/poetry-lib-release.sh ${env.PIP_USER} $PIP_PWD")
+                            Globals.version = sh(script: 'git describe --tags --abbrev=0', returnStdout: true).trim()
+                            env.TAG_NAME = Globals.version
+                        }
                     }
                 }
             }
