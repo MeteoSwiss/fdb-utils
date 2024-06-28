@@ -1,6 +1,7 @@
 import logging
 from typing import Annotated
 import sys
+import os
 
 import typer
 
@@ -20,13 +21,12 @@ def list(
     show: Annotated[str, typer.Option(help='The keys to print, eg. "step,number,param"')],
     filter: Annotated[str, typer.Option(help='The metadata to filter results by, eg "date=20240624,time=0600".')]
     ) -> None:
-    """List metadata of data archived of FDB.
-    """
-
+    """List metadata of data archived of FDB."""
 
     show_keys = show.split(',')
 
     filter_key_value_pairs = filter.split(',')
     filter_by_values = dict(pair.split('=') for pair in filter_key_value_pairs)
 
-    list_all_values(show_keys, filter_by_values)
+    os.environ['METKIT_RAW_PARAM']='1'
+    list_all_values(*show_keys, **filter_by_values)
