@@ -31,3 +31,4 @@ def validate_environment() -> None:
         raise RuntimeError("FDB config is unset, set either FDB5_CONFIG_FILE or FDB5_CONFIG.")
     if not ('FDB5_HOME' in os.environ or 'FDB5_DIR' in os.environ):
         raise RuntimeError("Path to FDB5 library is undefined, set either FDB5_HOME or FDB5_DIR.")
+    check_fdb_version_greater_than("5.11")
