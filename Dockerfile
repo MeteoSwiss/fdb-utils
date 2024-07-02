@@ -1,4 +1,4 @@
-# This Dockerfile is used to build a test environment for the library
+# This Dockerfile is used to build a test environment for the library that contains git, FDB5 and ECCODES libraries.
 
 FROM dockerhub.apps.cp.meteoswiss.ch/numericalweatherpredictions/fdb-data-poller-base:latest AS dependencies
 

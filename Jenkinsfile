@@ -82,7 +82,8 @@ pipeline {
                         script {
                             runWithPodman.call "${Globals.IMAGE_NAME}:latest",
                                 "poetry install --all-extras && " +
-                                "poetry run python -m pytest --junitxml=junit-3.10.xml test/"
+                                "poetry run python -m coverage run --data-file=.coverage -m pytest --junitxml=junit-3.11.xml test/ && " +
+                                "poetry run coverage xml"
                         }
                     }
                 }
