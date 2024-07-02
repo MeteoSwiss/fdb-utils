@@ -2,7 +2,7 @@
 
 FROM dockerhub.apps.cp.meteoswiss.ch/numericalweatherpredictions/fdb-data-poller-base:latest AS dependencies
 
-FROM dockerhub.apps.cp.meteoswiss.ch/mch/python-3.11 AS build
+FROM dockerhub.apps.cp.meteoswiss.ch/mch/python-3.11
 
 RUN mkdir -p /root/spack-root/
 

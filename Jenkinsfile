@@ -9,6 +9,7 @@ class Globals {
     static String documentationTag = ''
 
     static final String IMAGE_NAME = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/fdb-utils-test'
+    static final String IMAGE_REPO = 'docker-intern-nexus.meteoswiss.ch'
 }
 
 @Library('dev_tools@main') _
