@@ -56,7 +56,7 @@ pipeline {
                     steps {
                         script {
                             runWithPodman.pythonCmd '3.10',
-                                "apt-get update && apt-get install git -y --no-install-recommends git && " +
+                                "apt-get update && apt-get install git libeccodes-dev -y --no-install-recommends git && " +
                                 "poetry install --all-extras && " +
                                 "poetry run python -m pytest --junitxml=junit-3.10.xml test/"
                         }
@@ -68,7 +68,7 @@ pipeline {
                     steps {
                         script {
                             runWithPodman.pythonCmd Globals.pythonVersion,
-                                "apt-get update && apt-get install git -y --no-install-recommends git && " +
+                                "apt-get update && apt-get install git libeccodes-dev -y --no-install-recommends git && " +
                                 "poetry install --all-extras && " +
                                 "poetry run python -m pytest --junitxml=junit-${Globals.pythonVersion}.xml test/"
                         }
