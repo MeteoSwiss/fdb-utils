@@ -55,7 +55,10 @@ pipeline {
                 stage('3.10') {
                     steps {
                         script {
-                            runWithPodman.poetryPytest '3.10', false, false
+                            runWithPodman.pythonCmd '3.10',
+                                "apt-get update && apt-get install git -y --no-install-recommends git && " +
+                                "poetry install --all-extras && " +
+                                "poetry run python -m pytest --junitxml=junit-3.10.xml test/"
                         }
                     }
                 }
@@ -64,7 +67,10 @@ pipeline {
                 stage('python 3.11') {
                     steps {
                         script {
-                            runWithPodman.poetryPytest Globals.pythonVersion
+                            runWithPodman.pythonCmd Globals.pythonVersion,
+                                "apt-get update && apt-get install git -y --no-install-recommends git && " +
+                                "poetry install --all-extras && " +
+                                "poetry run python -m pytest --junitxml=junit-${Globals.pythonVersion}.xml test/"
                         }
                     }
                 }

@@ -59,9 +59,9 @@ def _set_grib_definitions_path():
                 shutil.rmtree(eccodes_cosmo_dir)
 
             subprocess.run(["git", "clone", "--depth", "1", "-b", "2.25.1",
-                            "git@github.com:ecmwf/eccodes.git", f"{eccodes_dir}"])
+                            "https://github.com/ecmwf/eccodes.git", f"{eccodes_dir}"])
             subprocess.run(["git", "clone", "--depth", "1", "-b", "revise_mars_model",
-                            "git@github.com:cosunae/eccodes-cosmo-resources.git", f"{eccodes_cosmo_dir}"])
+                            "https://github.com/cosunae/eccodes-cosmo-resources.git", f"{eccodes_cosmo_dir}"])
             
             for i in ('eccodes-cosmo-resources', 'eccodes'):
                 # Keep only definitions folder from eccodes/eccodes-cosmo-resources
