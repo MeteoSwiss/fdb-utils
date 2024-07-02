@@ -43,12 +43,12 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
         
     import pyfdb
 
-    fitler_values_msg = f" for {filter_by_values}" if filter_by_values else ''
+    filter_values_msg = f" for {filter_by_values}" if filter_by_values else ''
 
     if filter_keys:
-        print(f"Keys/Values of {', '.join(filter_keys)} in FDB{fitler_values_msg}:")
+        print(f"Keys/Values of {', '.join(filter_keys)} in FDB{filter_values_msg}:")
     else:
-        print(f"Keys/Values in FDB{fitler_values_msg}:")
+        print(f"Keys/Values in FDB{filter_values_msg}:")
 
     if not filter_by_values:
         request = {}

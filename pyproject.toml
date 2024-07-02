@@ -16,7 +16,7 @@ priority = "primary"
 [[tool.poetry.source]]
 name = "pypi-mch-publish"
 # only hub entrypoint can be used for publishing libraries (accessible from CI/CD server)
-url = "https://hub.meteoswiss.ch/nexus/repository/python-mch/"
+url = "https://service.meteoswiss.ch/nexus/repository/python-mch/"
 
 [tool.poetry.scripts]
 fdb-utils = "fdb_utils.main:app"
@@ -26,9 +26,12 @@ python = ">=3.10,<3.12"
 typer = "^0.12.3"
 eccodes = "^1.7.1"
 pyfdb = { git = "https://github.com/ecmwf/pyfdb.git", branch = "master" }
+packaging = "^24.1"
+cffi = "^1.16.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.6.1"
+pytest-mock = "*"
 pydata-sphinx-theme = "^0.14.1"
 pylint = "^3.0.2"
 pytest = "^7.4.3"
@@ -36,6 +39,12 @@ pytest-cov = "^4.1.0"
 sphinx = "^7.2.6"
 sphinx-autoapi = "^3.0.0"
 yapf = "^0.40.2"
+python-dotenv = "^1.0.1"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "test"
+]
 
 [tool.yapf]
 based_on_style = "pep8"

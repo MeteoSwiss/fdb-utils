@@ -1,0 +1,8 @@
+---
+type: local
+engine: toc
+schema: /tests/fdb/schema
+spaces:
+- handler: Default
+  roots:
+  - path: /tests/fdb/root

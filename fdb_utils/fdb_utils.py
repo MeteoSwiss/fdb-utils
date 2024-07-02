@@ -2,6 +2,7 @@
 
 import logging
 import os
+import subprocess
 
 import cffi
 from packaging.version import parse
@@ -32,3 +33,14 @@ def validate_environment() -> None:
     if not ('FDB5_HOME' in os.environ or 'FDB5_DIR' in os.environ):
         raise RuntimeError("Path to FDB5 library is undefined, set either FDB5_HOME or FDB5_DIR.")
     check_fdb_version_greater_than("5.11")
+
+
+def fdb_info() -> None:
+    """Print information on FDB environment using `fdb-info --all`."""
+
+    output = subprocess.run([
+        f"{os.getenv('FDB5_HOME', 'unset')}/bin/fdb-info",
+        '--all'
+        ], stdout=subprocess.PIPE)
+    
+    print(output.stdout.decode('utf-8'))

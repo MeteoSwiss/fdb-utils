@@ -6,7 +6,7 @@ import os
 import typer
 
 from fdb_utils.user.describe import list_all_values
-from fdb_utils.fdb_utils import validate_environment
+from fdb_utils.fdb_utils import validate_environment, fdb_info
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 
@@ -16,17 +16,29 @@ app = typer.Typer(no_args_is_help=True)
 
 validate_environment()
 
-@app.command(no_args_is_help=True)
+@app.command()
 def list(
-    show: Annotated[str, typer.Option(help='The keys to print, eg. "step,number,param"')],
-    filter: Annotated[str, typer.Option(help='The metadata to filter results by, eg "date=20240624,time=0600".')]
+    show: Annotated[str, typer.Option(help='The keys to print, eg. "step,number,param"')] = "",
+    filter: Annotated[str, typer.Option(help='The metadata to filter results by, eg "date=20240624,time=0600".')] = ""
     ) -> None:
     """List metadata of data archived of FDB."""
 
-    show_keys = show.split(',')
+    if not filter:
+        all = typer.confirm("Are you sure you want list everything in FDB? (may take some time).")
+        if not all:
+            raise typer.Abort()
+
+    show_keys = show.split(',') if show else []
 
     filter_key_value_pairs = filter.split(',')
-    filter_by_values = dict(pair.split('=') for pair in filter_key_value_pairs)
+    filter_by_values = dict(pair.split('=') for pair in filter_key_value_pairs) if filter else {}
 
     os.environ['METKIT_RAW_PARAM']='1'
+
     list_all_values(*show_keys, **filter_by_values)
+
+
+@app.command()
+def info() -> None:
+    """Print information on FDB environment."""
+    fdb_info()
