@@ -16,7 +16,7 @@ priority = "primary"
 [[tool.poetry.source]]
 name = "pypi-mch-publish"
 # only hub entrypoint can be used for publishing libraries (accessible from CI/CD server)
-url = "https://service.meteoswiss.ch/nexus/repository/python-mch/"
+url = "https://hub.meteoswiss.ch/nexus/repository/python-mch/"
 
 [tool.poetry.scripts]
 fdb-utils = "fdb_utils.main:app"
