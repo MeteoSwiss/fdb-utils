@@ -7,6 +7,8 @@ class Globals {
 
     // the tag used when publishing documentation
     static String documentationTag = ''
+
+    static final String IMAGE_NAME = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/fdb-utils-test'
 }
 
 @Library('dev_tools@main') _
@@ -50,27 +52,36 @@ pipeline {
             }
         }
 
+        stage('Prepare Test Image') {
+            steps {
+                withCredentials([usernamePassword(
+                                    credentialsId: 'openshift-nexus',
+                                    passwordVariable: 'NXPASS', 
+                                    usernameVariable: 'NXUSER')
+                            ]) {
+                    echo "---- BUILDING TEST IMAGE ----"
+                    sh """
+                    podman build --pull -f Dockerfile -t "${Globals.IMAGE_NAME}:latest" .
+                    """
+                    echo "---- PUBLISH TEST IMAGE ----"
+                    sh """
+                    echo $NXPASS | podman login ${Globals.IMAGE_REPO} -u $NXUSER --password-stdin
+                    podman push ${Globals.IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
         stage('Test') {
             parallel {
-                stage('3.10') {
-                    steps {
-                        script {
-                            runWithPodman.pythonCmd '3.10',
-                                "apt-get update && apt-get install git libeccodes-dev -y --no-install-recommends git && " +
-                                "poetry install --all-extras && " +
-                                "poetry run python -m pytest --junitxml=junit-3.10.xml test/"
-                        }
-                    }
-                }
                 // python 3.11 is the default version, used for executing pylint, mypy, sphinx etc.
                 // all libs. are kept in the .venv folder
                 stage('python 3.11') {
                     steps {
                         script {
-                            runWithPodman.pythonCmd Globals.pythonVersion,
-                                "apt-get update && apt-get install git libeccodes-dev -y --no-install-recommends git && " +
+                            runWithPodman.call "${Globals.IMAGE_NAME}:latest",
                                 "poetry install --all-extras && " +
-                                "poetry run python -m pytest --junitxml=junit-${Globals.pythonVersion}.xml test/"
+                                "poetry run python -m pytest --junitxml=junit-3.10.xml test/"
                         }
                     }
                 }
