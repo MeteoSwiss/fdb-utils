@@ -145,17 +145,17 @@ pipeline {
         }
 
         stage('Release') {
-            when { expression { Globals.release } }
+            when { expression { params.RELEASE_BUILD } }
             steps {
                 echo 'Build a wheel and publish'
                 withCredentials([usernamePassword(
-                                    credentialsId: 'github app credential for the meteoswiss-apn github organization',
+                                    credentialsId: 'github app credential for the meteoswiss github organization (limited to repositories used by APN)',
                                     passwordVariable: 'GITHUB_ACCESS_TOKEN', 
                                     usernameVariable: 'GITHUB_APP')
                             ]) {
                     script {
 
-                        sh "git remote set-url origin https://${GITHUB_APP}:${GITHUB_ACCESS_TOKEN}@github.com/MeteoSwiss-APN/fdb-data-poller"
+                        sh "git remote set-url origin https://${GITHUB_APP}:${GITHUB_ACCESS_TOKEN}@github.com/MeteoSwiss/fdb-utils"
                         
                         withCredentials([string(credentialsId: "python-mch-nexus-secret", variable: 'PIP_PWD')]) {
                             runDevScript("build/poetry-lib-release.sh ${env.PIP_USER} $PIP_PWD")
