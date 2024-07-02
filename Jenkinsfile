@@ -214,5 +214,8 @@ pipeline {
             echo 'Build succeeded'
             updateGitlabCommitStatus name: 'Build', state: 'success'
         }
+        cleanup{
+            cleanWs()
+        }
     }
 }
