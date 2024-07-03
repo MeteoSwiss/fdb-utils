@@ -17,7 +17,7 @@ FDB Utils depends on the FDB and Eccodes libraries, these are not installed with
     export FDB5_HOME=<path/to/fdb/home>
     export ECCODES_HOME=<path/to/eccodes/home>
 
-See https://meteoswiss.atlassian.net/wiki/x/gY_XC for the environment variables to use for MeteoSwiss's realtime FDB (at CSCS).
+See `MeteoSwiss Confluence <https://meteoswiss.atlassian.net/wiki/x/gY_XC>`_ for the environment variables to use for MeteoSwiss's realtime FDB (at CSCS).
 
 Install the package from PyPI (MeteoSwiss Nexus)
 
