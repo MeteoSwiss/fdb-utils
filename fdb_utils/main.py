@@ -12,26 +12,29 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 
 _logger = logging.getLogger(__name__)
 
-app = typer.Typer(no_args_is_help=True, add_completion=False, help="fdb-utils CLI tool to help users and admins of FDB.")
+app = typer.Typer(
+    no_args_is_help=True,
+    add_completion=False,
+    help="fdb-utils CLI tool to help users and admins of FDB.")
 
 validate_environment()
 
-@app.command()
-def list(
+@app.command("list")
+def list_metadata(
     show: Annotated[str, typer.Option(help='The keys to print, eg. "step,number,param"')] = "",
-    filter: Annotated[str, typer.Option(help='The metadata to filter results by, eg "date=20240624,time=0600".')] = ""
+    filter_values: Annotated[str, typer.Option("--filter", help='The metadata to filter results by, eg "date=20240624,time=0600".')] = ""
     ) -> None:
     """List a union of metadata key/value pairs of GRIB messages archived to FDB."""
 
-    if not filter:
-        all = typer.confirm("Are you sure you want list everything in FDB? (may take some time).")
-        if not all:
+    if not filter_values:
+        list_all = typer.confirm("Are you sure you want list everything in FDB? (may take some time).")
+        if not list_all:
             raise typer.Abort()
 
     show_keys = show.split(',') if show else []
 
-    filter_key_value_pairs = filter.split(',')
-    filter_by_values = dict(pair.split('=') for pair in filter_key_value_pairs) if filter else {}
+    filter_key_value_pairs = filter_values.split(',')
+    filter_by_values = dict(pair.split('=') for pair in filter_key_value_pairs) if filter_values else {}
 
     os.environ['METKIT_RAW_PARAM']='1'
 

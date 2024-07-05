@@ -39,4 +39,3 @@ def wipe_fdb(forecasts: list[datetime], exception: int = 0) -> None:
 
     # The --unsafe-wipe-all flag also wipes all (unowned) contents of an unclean database.
     subprocess.run([fdb_wipe_exe, "--doit", "--unsafe-wipe-all", "--minimum-keys=", wipe_filter], check=True)
-

@@ -8,7 +8,7 @@ _logger = logging.getLogger(__name__)
 SCHEMA_KEYS = ('date','expver','model','number','stream','time','type','levtype','param','step','levelist')
 
 def _validate_filter(filter_by_values: dict) -> None:
-    for k,v in filter_by_values.items():
+    for k, _ in filter_by_values.items():
         if k not in SCHEMA_KEYS:
             raise RuntimeError(f"Key {k} must be one of '{', '.join(SCHEMA_KEYS)}'")
 
@@ -17,8 +17,9 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     """
     Print and return values from FDB, filtered by specified keys and values.
 
-    This function retrieves key-value pairs from FDB using the `pyfdb` library, optionally filtered by specific keys and values.
-    It prints the keys and their corresponding values from the database and returns a dictionary with the results.
+    This function retrieves key-value pairs from FDB using the `pyfdb` library, 
+    optionally filtered by specific keys and values. It prints the keys and their corresponding 
+    values from the database and returns a dictionary with the results.
     If no keys or values match the filters, 'None' is printed and an empty dictionary is returned.
 
     Parameters:
@@ -33,14 +34,15 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     Returns:
     --------
     dict
-        A dictionary where the keys are the dimensions and the values are sets containing the corresponding values from FDB.
+        A dictionary where the keys are the dimensions and the 
+        values are sets containing the corresponding values from FDB.
 
     Example:
     --------
     >>> list_all_values('step', 'param', date='20240202', time='0600')
 
     """
-        
+
     import pyfdb
 
     filter_values_msg = f" for {filter_by_values}" if filter_by_values else ''
@@ -59,7 +61,7 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     result: dict[str, set[str | int]] = {}
 
     for el in pyfdb.list(request, True, True):
-        if not filter_keys: 
+        if not filter_keys:
             for key in el['keys']:
                 if not key in result:
                     result[key] = set()
@@ -79,9 +81,9 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     if not result:
         print('None')
 
-    for key in result:
-        if result[key]:
-            print(f'{key}: {result[key]}')
+    for key, value in result.items():
+        if value:
+            print(f'{key}: {value}')
 
     print('')
     return result

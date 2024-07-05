@@ -24,7 +24,7 @@ def check_fdb_version_greater_than(min_version: str = "5.11.99") -> None:
     lib_version = ffi.string(tmp_str[0]).decode('utf-8')
 
     if parse(lib_version) < parse(min_version):
-        raise RuntimeError("Version of libFDB5 found is too old. {} < {}".format(lib_version, min_version))
+        raise RuntimeError(f"Version of libFDB5 found is too old. {lib_version} < {min_version}")
 
 
 def validate_environment() -> None:
@@ -41,6 +41,6 @@ def fdb_info() -> None:
     output = subprocess.run([
         f"{os.getenv('FDB5_HOME', 'unset')}/bin/fdb-info",
         '--all'
-        ], stdout=subprocess.PIPE)
-    
+        ], stdout=subprocess.PIPE, check=False)
+
     print(output.stdout.decode('utf-8'))
