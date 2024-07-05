@@ -74,12 +74,11 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
                     result[key].add(el['keys'][key] if key not in ('number, levelist') else int(el['keys'][key]))
 
     for requested_key in filter_keys:
-        if not result[requested_key]:
+        if requested_key not in result:
             print(f'{requested_key}: Key not found')
-            result.pop(requested_key)
 
     if not result:
-        print('None')
+        print('No metadata found matching your request.')
 
     for key, value in result.items():
         if value:
