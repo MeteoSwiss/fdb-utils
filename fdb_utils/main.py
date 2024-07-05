@@ -21,7 +21,7 @@ def list(
     show: Annotated[str, typer.Option(help='The keys to print, eg. "step,number,param"')] = "",
     filter: Annotated[str, typer.Option(help='The metadata to filter results by, eg "date=20240624,time=0600".')] = ""
     ) -> None:
-    """List a union of metadata key/value pairs of GRIB messages archived of FDB."""
+    """List a union of metadata key/value pairs of GRIB messages archived to FDB."""
 
     if not filter:
         all = typer.confirm("Are you sure you want list everything in FDB? (may take some time).")
