@@ -12,7 +12,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 
 _logger = logging.getLogger(__name__)
 
-app = typer.Typer(no_args_is_help=True)
+app = typer.Typer(no_args_is_help=True, add_completion=False, help="fdb-utils CLI tool to help users and admins of FDB.")
 
 validate_environment()
 
@@ -21,7 +21,7 @@ def list(
     show: Annotated[str, typer.Option(help='The keys to print, eg. "step,number,param"')] = "",
     filter: Annotated[str, typer.Option(help='The metadata to filter results by, eg "date=20240624,time=0600".')] = ""
     ) -> None:
-    """List metadata of data archived of FDB."""
+    """List a union of metadata key/value pairs of GRIB messages archived of FDB."""
 
     if not filter:
         all = typer.confirm("Are you sure you want list everything in FDB? (may take some time).")
