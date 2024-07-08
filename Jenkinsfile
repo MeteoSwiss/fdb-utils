@@ -7,6 +7,9 @@ class Globals {
 
     // the tag used when publishing documentation
     static String documentationTag = ''
+
+    static final String IMAGE_NAME = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/fdb-utils-test'
+    static final String IMAGE_REPO = 'docker-intern-nexus.meteoswiss.ch'
 }
 
 @Library('dev_tools@main') _
@@ -50,21 +53,37 @@ pipeline {
             }
         }
 
+        stage('Prepare Test Image') {
+            steps {
+                withCredentials([usernamePassword(
+                                    credentialsId: 'openshift-nexus',
+                                    passwordVariable: 'NXPASS', 
+                                    usernameVariable: 'NXUSER')
+                            ]) {
+                    echo "---- BUILDING TEST IMAGE ----"
+                    sh """
+                    podman build --pull -f Dockerfile -t "${Globals.IMAGE_NAME}:latest" .
+                    """
+                    echo "---- PUBLISH TEST IMAGE ----"
+                    sh """
+                    echo $NXPASS | podman login ${Globals.IMAGE_REPO} -u $NXUSER --password-stdin
+                    podman push ${Globals.IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
         stage('Test') {
             parallel {
-                stage('3.10') {
-                    steps {
-                        script {
-                            runWithPodman.poetryPytest '3.10', false, false
-                        }
-                    }
-                }
                 // python 3.11 is the default version, used for executing pylint, mypy, sphinx etc.
                 // all libs. are kept in the .venv folder
                 stage('python 3.11') {
                     steps {
                         script {
-                            runWithPodman.poetryPytest Globals.pythonVersion
+                            runWithPodman.call "${Globals.IMAGE_NAME}:latest",
+                                "poetry install --all-extras && " +
+                                "poetry run python -m coverage run --data-file=.coverage -m pytest --junitxml=junit-3.11.xml test/ && " +
+                                "poetry run coverage xml"
                         }
                     }
                 }
@@ -129,12 +148,20 @@ pipeline {
             when { expression { params.RELEASE_BUILD } }
             steps {
                 echo 'Build a wheel and publish'
-                script {
-                    withCredentials([string(credentialsId: "python-mch-nexus-secret", variable: 'PIP_PWD')]) {
-                        runDevScript("build/poetry-lib-release.sh ${env.PIP_USER} $PIP_PWD 3.11")
-                        Globals.version = sh(script: 'git describe --tags --abbrev=0', returnStdout: true).trim()
-                        Globals.documentationTag = Globals.version
-                        env.TAG_NAME = Globals.documentationTag
+                withCredentials([usernamePassword(
+                                    credentialsId: 'github app credential for the meteoswiss github organization (limited to repositories used by APN)',
+                                    passwordVariable: 'GITHUB_ACCESS_TOKEN', 
+                                    usernameVariable: 'GITHUB_APP')
+                            ]) {
+                    script {
+
+                        sh "git remote set-url origin https://${GITHUB_APP}:${GITHUB_ACCESS_TOKEN}@github.com/MeteoSwiss/fdb-utils"
+                        
+                        withCredentials([string(credentialsId: "python-mch-nexus-secret", variable: 'PIP_PWD')]) {
+                            runDevScript("build/poetry-lib-release.sh ${env.PIP_USER} $PIP_PWD")
+                            Globals.version = sh(script: 'git describe --tags --abbrev=0', returnStdout: true).trim()
+                            env.TAG_NAME = Globals.version
+                        }
                     }
                 }
             }
@@ -186,6 +213,9 @@ pipeline {
         success {
             echo 'Build succeeded'
             updateGitlabCommitStatus name: 'Build', state: 'success'
+        }
+        cleanup{
+            cleanWs()
         }
     }
 }
