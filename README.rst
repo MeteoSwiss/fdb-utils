@@ -19,7 +19,7 @@ FDB Utils depends on the FDB and Eccodes libraries, these are not installed with
 
 See `MeteoSwiss Confluence <https://meteoswiss.atlassian.net/wiki/x/gY_XC>`_ for the environment variables to use for MeteoSwiss's realtime FDB (at CSCS).
 
-Install the package from PyPI (MeteoSwiss Nexus)
+Install the package from PyPI (MeteoSwiss Nexus, see `how to setup Nexus PyPI access from CSCS <https://meteoswiss.atlassian.net/wiki/x/XogHAQ>`_)
 
 .. code-block:: console
 
