@@ -10,7 +10,7 @@ import yaml
 import pytest
 from dotenv import dotenv_values
 
-from fdb_utils.fdb_utils import fdb_info
+from fdb_utils.env import fdb_info
 
 WORKDIR: Path = Path(os.path.dirname(os.path.realpath(__file__))) 
 

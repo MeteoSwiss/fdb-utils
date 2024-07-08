@@ -1,4 +1,4 @@
-"""This module provides a function for archiving files to FDB."""
+"""This module provides a function for deleting data from FDB."""
 
 import logging
 import os

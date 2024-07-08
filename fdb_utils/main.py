@@ -6,7 +6,7 @@ import os
 import typer
 
 from fdb_utils.user.describe import list_all_values
-from fdb_utils.fdb_utils import validate_environment, fdb_info
+from fdb_utils.env import validate_environment, fdb_info
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 

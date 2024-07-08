@@ -1,5 +1,3 @@
-"""This module provides a function for archiving files to FDB."""
-
 import logging
 import os
 import subprocess
