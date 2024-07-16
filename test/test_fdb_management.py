@@ -57,7 +57,7 @@ def test_fdb_definitions(data_dir: Path, fdb):
     for filename in ("v_ml.grib",  "v_pl.grib",  "v_sfc.grib"):
 
         file_path = data_dir / filename
-        _modify_grib_file(file_path, date='20230410')
+        _modify_grib_file(file_path, date='20230410', step='4m')
         with open(file_path, "rb") as f:
             fdb.archive(f.read())
 
@@ -77,7 +77,7 @@ def test_fdb_definitions(data_dir: Path, fdb):
         'expver': '0001',
         'stream': 'enfo',
         'date': '20230410', 
-        'step': '0', 
+        'step': '4m', 
         'time': '0900'
         }
     
@@ -144,7 +144,7 @@ def _generate_file_to_upload(base_path: Path, data_dir: Path, suffix='' ,random=
 def _modify_grib_file(path: Path, 
                       date: str | None = None, 
                       time: str | None = None, 
-                      step: int | None = None, 
+                      step: int | str | None = None, 
                       number: int | None = None,
                       levtype: str | None = None) -> None:
     # Modify keys in a GRIB file for testing.
@@ -194,7 +194,7 @@ def _modify_grib_file(path: Path,
         if time is not None:
             assert eccodes.codes_get(gid, "dataTime", int) == int(time)
         if step is not None:
-            assert eccodes.codes_get(gid, "step", int) == int(step)
+            assert eccodes.codes_get(gid, "step", str) == str(step)
         if number is not None:
             assert eccodes.codes_get(gid, "number", int) == int(number)
         eccodes.codes_release(gid)
