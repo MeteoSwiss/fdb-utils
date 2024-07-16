@@ -992,8 +992,8 @@ pyeccodes = "*"
 [package.source]
 type = "git"
 url = "https://github.com/ecmwf/pyfdb.git"
-reference = "0.0.4"
-resolved_reference = "4395a87f9b807baa2006d11cc3cf3791d3d3d76c"
+reference = "master"
+resolved_reference = "b004bd58ed18c3d7e8bfc3e8081ae6c24fc4b739"
 
 [[package]]
 name = "pygments"
@@ -1609,4 +1609,4 @@ reference = "pypi-mch"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "5c114edca76ea488410ea4b36a61e3e5bf9b1c31f694fa6933360630b64b3472"
+content-hash = "48d723eaead4d7ac93928ce8eee78f7457a87b5bf3977f334f2543c0d1cf4159"
