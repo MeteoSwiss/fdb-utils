@@ -2,7 +2,7 @@
 name = "fdb-utils"
 # Keep only Major and Minor version in this configuration,
 # the patch version is calculated when releasing the library
-version = "1.0"
+version = "1.1"
 description = "Python library for users and admins of FDB."
 authors = ["Victoria Cherkas <victoria.cherkas@meteoswiss.ch>"]
 readme = "README.rst"
