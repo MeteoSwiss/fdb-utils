@@ -4,19 +4,19 @@ import string
 from datetime import datetime
 from pathlib import Path
 from random import choice
+from test.conftest import data_dir, fdb, test_dir
 from unittest.mock import patch
 
 import eccodes
 import pytest
 
 from fdb_utils.management.wipe import wipe_fdb
-from test.conftest import data_dir, test_dir, fdb
 
 
 @pytest.fixture
 def mock_fdb_wipe_exe(tmp_path, monkeypatch):
     fdb_wipe_exe = tmp_path / 'bin' / "fdb-wipe"
-    os.mkdir(tmp_path / 'bin') 
+    os.mkdir(tmp_path / 'bin')
     fdb_wipe_exe.write_text("fake fdb-wipe executable content")
     monkeypatch.setenv("FDB5_HOME", str(tmp_path))
     return str(fdb_wipe_exe)
@@ -33,6 +33,7 @@ def test_wipe_fdb_empty_list():
 
     assert "Cannot ignore index 3 of 2 archived forecasts" in str(e.value)
 
+
 @patch("fdb_utils.management.wipe.subprocess.run")
 def test_wipe_fdb(mock_subprocess_run, mock_fdb_wipe_exe):
 
@@ -47,6 +48,20 @@ def test_wipe_fdb(mock_subprocess_run, mock_fdb_wipe_exe):
         "date=20230101,time=0000"
     ])
 
+
+@patch("fdb_utils.management.wipe.subprocess.run")
+def test_wipe_fdb_model(mock_subprocess_run, mock_fdb_wipe_exe):
+
+    forecasts = [datetime(2023, 1, 1), datetime(2023, 1, 2)]
+
+    wipe_fdb(forecasts, model="icon-ch1-eps")
+
+    assert mock_subprocess_run.called_once_with([
+        mock_fdb_wipe_exe,
+        "--doit",
+        "--minimum-keys=",
+        "date=20230101,time=0000,model=icon-ch1-eps"
+    ])
 
 
 def test_fdb_definitions(data_dir: Path, fdb):
@@ -72,16 +87,16 @@ def test_fdb_definitions(data_dir: Path, fdb):
     for item in archived_metadata:
         print(item)
 
-    request = {    
+    request = {
         'class': 'od',
         'expver': '0001',
         'stream': 'enfo',
-        'date': '20230410', 
-        'step': '4m', 
+        'date': '20230410',
+        'step': '4m',
         'time': '0900'
         }
-    
-    
+
+
     keys_in_fdb = [item['keys'] for item in fdb.list(request, True, True)]
 
     reduced_keys_in_fdb = [{key: item[key] for key in archived_metadata[0].keys()} for item in keys_in_fdb]
@@ -113,7 +128,7 @@ def extract_metadata(path: Path) -> dict:
                 'step': step,
                 'number': number,
                 'levtype': levtype }
-            
+
             file_metadata.append(record_metadata)
 
             eccodes.codes_release(gid)
@@ -123,7 +138,7 @@ def extract_metadata(path: Path) -> dict:
 
 
 def _generate_file_to_upload(base_path: Path, data_dir: Path, suffix='' ,random=False) -> tuple[Path, str, str]:
-    
+
     file_timestamp = datetime.now().strftime("%y%m%d") + '00'
 
     if not random:
@@ -141,10 +156,10 @@ def _generate_file_to_upload(base_path: Path, data_dir: Path, suffix='' ,random=
     return file_to_upload, file_name, file_timestamp
 
 
-def _modify_grib_file(path: Path, 
-                      date: str | None = None, 
-                      time: str | None = None, 
-                      step: int | str | None = None, 
+def _modify_grib_file(path: Path,
+                      date: str | None = None,
+                      time: str | None = None,
+                      step: int | str | None = None,
                       number: int | None = None,
                       levtype: str | None = None) -> None:
     # Modify keys in a GRIB file for testing.
@@ -173,7 +188,7 @@ def _modify_grib_file(path: Path,
 
     print("Modifying GRIB file: %s %s" % (path, modification))
 
-    cnt = 0 
+    cnt = 0
     with open(path, "rb") as fi, open(str(path)+'_modified', "wb") as fo:
         while 1:
             cnt += 1

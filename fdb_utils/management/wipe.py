@@ -3,14 +3,13 @@
 import logging
 import os
 import subprocess
-from pathlib import Path
 from datetime import datetime
-
+from pathlib import Path
 
 _logger = logging.getLogger(__name__)
 
 
-def wipe_fdb(forecasts: list[datetime], exception: int = 0) -> None:
+def wipe_fdb(forecasts: list[datetime], exception: int = 0, model: str | None = None) -> None:
     """
     Delete oldest forecast stored in FDB.
     To ignore statically archived data (the oldest forecast), set exception = 1 else 0
@@ -28,6 +27,8 @@ def wipe_fdb(forecasts: list[datetime], exception: int = 0) -> None:
     to_delete_date=forecasts[exception].strftime("%Y%m%d")
     to_delete_time=forecasts[exception].strftime("%H%M")
     wipe_filter=f"date={to_delete_date},time={to_delete_time}"
+    if model:
+        wipe_filter += f",model={model}"
 
     # FDB wipe is not available in the Python API so use the CLI.
     fdb_wipe_exe = f"{os.environ['FDB5_HOME']}/bin/fdb-wipe"
