@@ -15,7 +15,7 @@ class Globals {
 @Library('dev_tools@main') _
 pipeline {
     agent {
-      docker {
+      podman {
         image 'dockerhub.apps.cp.meteoswiss.ch/mch/python-3.11'
         label 'podman'
       }
