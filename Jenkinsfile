@@ -16,7 +16,7 @@ class Globals {
 pipeline {
     agent {
       docker {
-        image 'docker-all-nexus.meteoswiss.ch/python:3.11'
+        image 'dockerhub.apps.cp.meteoswiss.ch/mch/python-3.11'
         label 'podman'
       }
     }
