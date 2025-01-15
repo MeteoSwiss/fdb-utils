@@ -64,14 +64,16 @@ def test_wipe_fdb_model(mock_subprocess_run, mock_fdb_wipe_exe):
     ])
 
 
-def test_fdb_definitions(data_dir: Path, fdb):
+def test_fdb_definitions(tmp_path: Path, data_dir: Path, fdb):
 
     total_records = 0
     archived_metadata = list()
 
     for filename in ("v_ml.grib",  "v_pl.grib",  "v_sfc.grib"):
 
-        file_path = data_dir / filename
+        data_file_path = data_dir / filename
+        file_path = tmp_path / filename
+        shutil.copy(data_file_path, file_path)
         _modify_grib_file(file_path, date='20230410', step='4m')
         with open(file_path, "rb") as f:
             fdb.archive(f.read())
