@@ -2,7 +2,7 @@
 name = "fdb-utils"
 # Keep only Major and Minor version in this configuration,
 # the patch version is calculated when releasing the library
-version = "1.0"
+version = "1.1"
 description = "Python library for users and admins of FDB."
 authors = ["Victoria Cherkas <victoria.cherkas@meteoswiss.ch>"]
 readme = "README.rst"
@@ -24,7 +24,7 @@ fdb-utils = "fdb_utils.main:app"
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 typer = "^0.12.3"
-eccodes = "^1.7.1"
+eccodes = "^2.37.0"
 pyfdb = { git = "https://github.com/ecmwf/pyfdb.git", branch = "master" }
 packaging = "^24.1"
 cffi = "^1.16.0"
