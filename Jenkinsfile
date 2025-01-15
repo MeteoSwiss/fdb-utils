@@ -158,7 +158,7 @@ pipeline {
                         sh "git remote set-url origin https://${GITHUB_APP}:${GITHUB_ACCESS_TOKEN}@github.com/MeteoSwiss/fdb-utils"
                         
                         withCredentials([string(credentialsId: "python-mch-nexus-secret", variable: 'PIP_PWD')]) {
-                            runDevScript("build/poetry-lib-release.sh ${env.PIP_USER} $PIP_PWD")
+                            runDevScript("build/poetry-lib-release.sh ${env.PIP_USER} $PIP_PWD ${Globals.pythonVersion}")
                             Globals.version = sh(script: 'git describe --tags --abbrev=0', returnStdout: true).trim()
                             env.TAG_NAME = Globals.version
                         }
