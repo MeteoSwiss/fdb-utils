@@ -14,9 +14,7 @@ class Globals {
 
 @Library('dev_tools@main') _
 pipeline {
-    agent {
-      label 'podman'
-    }
+    agent {label 'podman'}
 
     parameters {
         booleanParam(name: 'RELEASE_BUILD', defaultValue: false, description: 'Creates and publishes a new release')
