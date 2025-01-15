@@ -9,7 +9,7 @@ from pathlib import Path
 _logger = logging.getLogger(__name__)
 
 
-def wipe_fdb(forecasts: list[datetime], exception: int = 0, model: str | None = None) -> None:
+def wipe_fdb(forecasts: list[datetime], exception: int = 0, model: str = "") -> None:
     """
     Delete oldest forecast stored in FDB.
     To ignore statically archived data (the oldest forecast), set exception = 1 else 0
