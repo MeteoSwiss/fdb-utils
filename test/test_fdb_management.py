@@ -3,7 +3,7 @@ import shutil
 import string
 from datetime import datetime
 from pathlib import Path
-from random import choice
+from secrets import choice
 from test.conftest import data_dir, fdb, test_dir
 from unittest.mock import patch
 
