@@ -29,8 +29,8 @@ pipeline {
                 module use /mch-environment/v8/modules/
                 module load python/3.11.7
                 echo "Installing poetry in venv at \$(pwd)/.venv"
-                python3 -m .venv
-                .venv/bin/pip install poetry==$(POETRY_VERSION)
+                python3 -m venv .venv
+                .venv/bin/pip install poetry==${POETRY_VERSION}
                 .venv/bin/poetry install
                 '''
             }
@@ -47,7 +47,7 @@ pipeline {
         stage('check archive') {
             steps {
                 sh '''#!/usr/bin/env bash
-                .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py $(model)
+                .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
                 '''
                 archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true
             }

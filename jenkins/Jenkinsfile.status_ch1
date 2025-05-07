@@ -1,0 +1,32 @@
+pipeline {
+    options {
+        // the variable $WORKSPACE is assigned dynamically at the beginning of every stage
+        // and might change depending on the number of concurrent builds active.
+        // The virtual environment is not relocatable.
+        disableConcurrentBuilds()
+    }
+
+    agent {
+        label 'balfrin'
+    }
+
+    triggers {
+        // We expect the ICON-CH1-EPS forecast to be fully archived 2.5 hours after the job starts.
+        cron('TZ=UTC\n30 2,5,8,11,14,17,20,23 * * *')
+    }
+
+    stages {
+        stage('run status check') {
+            steps {
+                build(job: 'ArchiveStatusBase', parameters: [string(name: 'model', value: 'icon-ch1-eps')])
+            }
+        }
+    }
+
+    post {
+        always{
+            echo 'Cleaning up workspace'
+            deleteDir()
+        }
+    }
+}
