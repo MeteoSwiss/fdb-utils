@@ -1,0 +1,99 @@
+class Globals {
+    static String cronSchedule = ""
+    static String model = ""
+}
+
+// Load the cron schedule from the config file
+def loadConfig() {
+    configFileProvider([configFile(fileId: 'ModelConfig', variable: 'jsonConfig')]) {
+        // Read and parse the content of the JSON config file using Jenkins' readJSON step
+        def configJson = readJSON file: env.jsonConfig
+        // Extract the cron schedule and test command from the parsed JSON
+        Globals.cronSchedule = configJson.cronSchedule
+        Globals.model = configJson.model
+    }
+}
+
+node {
+    loadConfig()  // Load config before the pipeline block
+}
+
+pipeline {
+    options {
+        // the variable $WORKSPACE is assigned dynamically at the beginning of every stage
+        // and might change depending on the number of concurrent builds active.
+        // The virtual environment is not relocatable.
+        disableConcurrentBuilds()
+    }
+
+    agent {
+        label 'balfrin'
+    }
+
+    triggers {
+        cron(Globals.cronSchedule)
+    }
+    environment{
+        FDB5_CONFIG_FILE = "/scratch/mch/trajond/fdb-realtime-lcm/realtime_config.yaml"
+        FDB5_HOME = "/scratch/mch/trajond/spack-view"
+        ECCODES_HOME = "/scratch/mch/trajond/spack-view"
+    }
+
+    stages {
+        stage('setup python env') {
+            steps {
+                sh '''#!/usr/bin/env bash
+                module use /mch-environment/v8/modules/
+                module load python/3.11.7
+                poetry install
+                '''
+            }
+        }
+
+        stage('test') {
+            steps {
+                sh '''#!/usr/bin/env bash
+                poetry run pytest
+                '''
+            }
+        }
+
+        stage('check archive') {
+            steps {
+                sh '''#!/usr/bin/env bash
+                poetry run python fdb_utils/ci/check_archive_status.py ${Globals.model}
+                '''
+            }
+        }
+    }
+
+    post {
+        failure {
+            // Send email with links to artifacts if the build fails
+            emailext(subject: "FDB Archive ${env.JOB_BASE_NAME}",
+                attachmentsPattern: '**/heatmap*.png',
+                body: """
+The pipeline which checks the FDB archive failed:
+${env.BUILD_URL}
+
+Possible causes are:
+*  The most recent poller run failed
+*  The most recent poller run is delayed
+*  An earlier archive is missing due to job failure or early deletion
+
+Please see the attached image and the Jenkins logs for more details.
+
+Regards,
+MCH Jenkins
+                """,
+                // Change to .p_polytope after verifying that the pipeline works correctly.
+                to: "Samuel.Weyerman@meteoswiss.ch",
+                recipientProviders: [requestor(), developers()]
+            )
+        }
+        always{
+            echo 'Cleaning up workspace'
+            deleteDir()
+        }
+    }
+}
