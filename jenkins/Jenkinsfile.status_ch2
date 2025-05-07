@@ -11,14 +11,14 @@ pipeline {
     }
 
     triggers {
-        // We expect the ICON-CH1-EPS forecast to be fully archived 2.5 hours after the job starts.
-        cron('TZ=UTC\n30 2,5,8,11,14,17,20,23 * * *')
+        // We expect the ICON-CH2-EPS forecast to be fully archived 3.5 hours after the job starts.
+        cron('TZ=UTC\n30 3,9,15,21 * * *')
     }
 
     stages {
         stage('run status check') {
             steps {
-                build(job: "../ArchiveStatusBase/${env.BRANCH_NAME}", propagate: true, parameters: [string(name: 'model', value: 'icon-ch1-eps')])
+                build(job: "../ArchiveStatusBase/${env.BRANCH_NAME}", propagate: true, parameters: [string(name: 'model', value: 'icon-ch2-eps')])
             }
         }
     }

@@ -57,7 +57,7 @@ pipeline {
     post {
         failure {
             // Send email with links to artifacts if the build fails
-            emailext(subject: "FDB Archive ${env.JOB_BASE_NAME}",
+            emailext(subject: "Failed FDB Archive of ${params.model}",
                 attachmentsPattern: '**/heatmap*.png',
                 body: """
 The pipeline which checks the FDB archive failed:
