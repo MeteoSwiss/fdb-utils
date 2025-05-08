@@ -25,11 +25,9 @@ fdb-utils = "fdb_utils.main:app"
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 typer = "^0.12.3"
-eccodes = "~2.38"
-eccodes-cosmo-resources-python = "~2.38"
+eccodes = "^2.37.0"
 matplotlib = "^3.10"
-pyfdb = { url = "https://github.com/ecmwf/pyfdb/archive/refs/tags/0.1.0.zip" }
-# pyfdb = { git = "https://github.com/ecmwf/pyfdb.git", branch = "master" }
+pyfdb = { url = "https://github.com/ecmwf/pyfdb/archive/refs/tags/0.0.3.zip" }
 packaging = "^24.1"
 cffi = "^1.16.0"
 
