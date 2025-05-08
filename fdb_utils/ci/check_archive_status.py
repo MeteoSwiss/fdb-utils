@@ -16,6 +16,8 @@ class Collection:
     steps: int
     forecasts: int
     interval: int
+    # How long after the start time of the run we expect the archive to be complete.
+    lead_time: timedelta
 
 
 @dataclass
@@ -32,12 +34,14 @@ COLLECTIONS: dict[str, Collection] = {
         steps=33,
         forecasts=8,
         interval=3,
+        lead_time = timedelta(hours=2, minutes=30)
     ),
     "icon-ch2-eps": Collection(
         members=21,
         steps=121,
         forecasts=4,
         interval=6,
+        lead_time = timedelta(hours=3, minutes=30)
     ),
 }
 
@@ -142,8 +146,10 @@ def plot_status(ax, cmap, status: list[list[int]], file_suffix: str):
 
 def main(model: str) -> bool:
     collection = COLLECTIONS[model]
-    # The model runs at fixed intervals starting at hour 0 UTC each day.
-    cur_timestamp = datetime.now(timezone.utc).timestamp()
+    # The model runs at fixed intervals starting at hour 0 UTC each day. Adjust the current timestamp
+    # by the expected time for forecast run + archival so that a run of the script at any time is
+    # expected to succeed.
+    cur_timestamp = (datetime.now(timezone.utc) - collection.lead_time).timestamp()
     run_interval = collection.interval * 60 * 60
     last_run_ts = cur_timestamp // run_interval * run_interval
     last_run_start = datetime.fromtimestamp(last_run_ts, tz=timezone.utc)
