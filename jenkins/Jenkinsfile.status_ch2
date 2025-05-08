@@ -38,6 +38,7 @@ pipeline {
                             fingerprintArtifacts: true,
                             selector: lastCompleted()
                         )
+                        archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true
                     }
                 }
             }
