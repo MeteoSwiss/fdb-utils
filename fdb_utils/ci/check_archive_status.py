@@ -26,13 +26,6 @@ class Parameter:
     filter: dict[str, str]
 
 
-# The ICON forecast GRIB files are separated by step, number, and suffix. The poller archives each file such that an
-# error will result in all data for the file missing. Thus we can check that all steps and members are present for a
-# single parameter that exists in the file to determine the status.
-#
-# The poller archives the hourly rotlatlon grib files for constant params (suffix 'c'), single and multi level params
-# (no suffix), and params on pressure levels (suffix 'p'). For details on what each file type means, see:
-# https://meteoswiss.atlassian.net/wiki/spaces/APN/pages/412975206/ICON-22+PP+Naming+scheme+for+intermediate+products#TC-tasks%2C-prepare-step
 COLLECTIONS: dict[str, Collection] = {
     "icon-ch1-eps": Collection(
         members=11,
@@ -49,6 +42,13 @@ COLLECTIONS: dict[str, Collection] = {
 }
 
 
+# The poller archives the hourly rotlatlon grib files for constant params (suffix 'c'), single and multi level params
+# (no suffix), and params on pressure levels (suffix 'p'). Each file contains data for all associated parameters for a
+# single step and ensemble member. For further details on what each file type means, see:
+# https://meteoswiss.atlassian.net/wiki/spaces/APN/pages/412975206/ICON-22+PP+Naming+scheme+for+intermediate+products#TC-tasks%2C-prepare-step
+#
+# An error during archival will result in all data for that file missing. Thus we can check that all steps and members
+# are present for a single parameter that exists in the file to determine the status.
 PARAMS: list[Parameter] = [
     Parameter(
         key="500004", file_suffix="c", is_constant=True, filter={"levtype": "sfc"}
@@ -143,8 +143,6 @@ def plot_status(ax, cmap, status: list[list[int]], file_suffix: str):
 def main(model: str) -> bool:
     collection = COLLECTIONS[model]
     # The model runs at fixed intervals starting at hour 0 UTC each day.
-    # Note, the ICON-CH1-EPS forecast should be fully archived 2.5 hours after the run start and ICON-CH2-EPS 3.5 hours
-    # after. The script should be run at times accordingly.
     cur_timestamp = datetime.now(timezone.utc).timestamp()
     run_interval = collection.interval * 60 * 60
     last_run_ts = cur_timestamp // run_interval * run_interval

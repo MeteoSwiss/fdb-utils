@@ -1,9 +1,11 @@
+// Base pipeline to verify that the latest forecast runs have been fully
+// archived to FDB. This pipeline configures the environment and runs the check,
+// but it is expected that it is run from a periodic pipeline for a specific
+// model.
 pipeline {
     options {
-        // the variable $WORKSPACE is assigned dynamically at the beginning of every stage
-        // and might change depending on the number of concurrent builds active.
-        // The virtual environment is not relocatable.
         disableConcurrentBuilds()
+        timeout(time: 1, unit: 'HOURS')
     }
 
     parameters {

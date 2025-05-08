@@ -1,8 +1,7 @@
+// Jenkins pipeline that runs periodically to check the status of the archive
+// of the ICON-CH2-EPS model to FDB.
 pipeline {
     options {
-        // the variable $WORKSPACE is assigned dynamically at the beginning of every stage
-        // and might change depending on the number of concurrent builds active.
-        // The virtual environment is not relocatable.
         disableConcurrentBuilds()
     }
 
@@ -11,7 +10,7 @@ pipeline {
     }
 
     triggers {
-        // We expect the ICON-CH2-EPS forecast to be fully archived 3.5 hours after the job starts.
+        // We expect the ICON-CH2-EPS forecast to be fully archived 3.5 hours after the job start.
         cron('TZ=UTC\n30 3,9,15,21 * * *')
     }
 
