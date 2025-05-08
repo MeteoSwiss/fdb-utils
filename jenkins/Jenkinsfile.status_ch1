@@ -26,7 +26,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        def statusBuild = build(
+                        build(
                             job: "../ArchiveStatusBase/${env.BRANCH_NAME}",
                             propagate: true,
                             parameters: [string(name: 'model', value: 'icon-ch1-eps')]
@@ -36,7 +36,7 @@ pipeline {
                             projectName: '../ArchiveStatusBase/jenkins-archive-status',
                             filter: '**/*heatmap*ch1*.png',
                             fingerprintArtifacts: true,
-                            selector: specific("${statusBuild.getNumber()}")
+                            selector: lastCompleted()
                         )
                     }
                 }
