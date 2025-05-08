@@ -15,9 +15,10 @@ pipeline {
     }
 
     environment{
-        FDB5_CONFIG_FILE = "/scratch/mch/trajond/fdb-realtime-lcm/realtime_config.yaml"
-        FDB5_HOME = "/scratch/mch/trajond/spack-view"
-        ECCODES_HOME = "/scratch/mch/trajond/spack-view"
+        FDB5_CONFIG_FILE = '/scratch/mch/trajond/fdb-realtime-lcm/realtime_config.yaml'
+        FDB5_HOME = '/scratch/mch/trajond/spack-view'
+        ECCODES_HOME = '/scratch/mch/trajond/spack-view'
+        GRIB_DEFINITION_PATH = '/scratch/mch/trajond/eccodes-cosmo-resources/definitions:/scratch/mch/trajond/eccodes/definitions'
         VENV_DIR = '$(pwd)/.venv'
         POETRY_VERSION = "1.8.1"
     }
