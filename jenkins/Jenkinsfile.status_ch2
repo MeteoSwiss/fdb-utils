@@ -17,14 +17,35 @@ pipeline {
 
     stages {
         stage('run status check') {
+            when {
+                anyOf {
+                    triggeredBy 'UserIdCause';
+                    branch 'main'
+                }
+            }
             steps {
-                build(job: "../ArchiveStatusBase/${env.BRANCH_NAME}", propagate: true, parameters: [string(name: 'model', value: 'icon-ch2-eps')])
+                script {
+                    try {
+                        statusBuild = build(
+                            job: "../ArchiveStatusBase/${env.BRANCH_NAME}",
+                            propagate: true,
+                            parameters: [string(name: 'model', value: 'icon-ch2-eps')]
+                        )
+                    } finally {
+                        copyArtifacts(
+                            projectName: '../ArchiveStatusBase/jenkins-archive-status',
+                            filter: '**/*heatmap*ch2*.png',
+                            fingerprintArtifacts: true,
+                            selector: specific("${statusBuild.getNumber()}")
+                        )
+                    }
+                }
             }
         }
     }
 
     post {
-        always{
+        always {
             echo 'Cleaning up workspace'
             deleteDir()
         }

@@ -46,10 +46,15 @@ pipeline {
 
         stage('check archive') {
             steps {
-                sh '''#!/usr/bin/env bash
-                .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
-                '''
-                archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true
+                script {
+                    try {
+                        sh '''#!/usr/bin/env bash
+                        .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
+                        '''
+                    } finally {
+                        archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true
+                    }
+                }
             }
         }
     }
@@ -78,7 +83,7 @@ MCH Jenkins
                 recipientProviders: [requestor(), developers()]
             )
         }
-        always{
+        cleanup {
             echo 'Cleaning up workspace'
             deleteDir()
         }
