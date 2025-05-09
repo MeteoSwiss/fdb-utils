@@ -1,7 +1,8 @@
 import argparse
+import datetime as dt   # import datetime, timedelta, timezone
 import logging
+import sys
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
 from enum import IntEnum
 
 import matplotlib.pyplot as plt
@@ -15,9 +16,9 @@ class Collection:
     members: int
     steps: int
     forecasts: int
-    interval: int
+    interval: dt.timedelta
     # How long after the start time of the run we expect the archive to be complete.
-    lead_time: timedelta
+    lead_time: dt.timedelta
 
 
 @dataclass
@@ -25,7 +26,7 @@ class Parameter:
     key: str
     file_suffix: str
     is_constant: bool
-    filter: dict[str, str]
+    field_filter: dict[str, str]
 
 
 COLLECTIONS: dict[str, Collection] = {
@@ -33,15 +34,15 @@ COLLECTIONS: dict[str, Collection] = {
         members=11,
         steps=33,
         forecasts=8,
-        interval=3,
-        lead_time = timedelta(hours=2, minutes=30)
+        interval=dt.timedelta(hours=3),
+        lead_time=dt.timedelta(hours=2, minutes=30)
     ),
     "icon-ch2-eps": Collection(
         members=21,
         steps=121,
         forecasts=4,
-        interval=6,
-        lead_time = timedelta(hours=3, minutes=30)
+        interval=dt.timedelta(hours=6),
+        lead_time=dt.timedelta(hours=3, minutes=30)
     ),
 }
 
@@ -55,33 +56,33 @@ COLLECTIONS: dict[str, Collection] = {
 # are present for a single parameter that exists in the file to determine the status.
 PARAMS: list[Parameter] = [
     Parameter(
-        key="500004", file_suffix="c", is_constant=True, filter={"levtype": "sfc"}
+        key="500004", file_suffix="c", is_constant=True, field_filter={"levtype": "sfc"}
     ),
     Parameter(
         key="500006",
         file_suffix="p",
         is_constant=False,
-        filter={"levelist": "200", "levtype": "pl"},
+        field_filter={"levelist": "200", "levtype": "pl"},
     ),
     Parameter(
         key="500001",
         file_suffix="",
         is_constant=False,
-        filter={"levelist": "1", "levtype": "ml"},
+        field_filter={"levelist": "1", "levtype": "ml"},
     ),
 ]
 
 
-def fx_filename(suffix: str, member: int, step: int) -> str:
-    """Construct the ICON fxshare filename for the provided parameters."""
-    filename_template = "_FXINP_lfrf{dd:02}{hh:02}000_{mmm:03}"
-    days = step // 24
-    hours = step % 24
-    filename = filename_template.format(dd=days, hh=hours, mmm=member) + suffix
-    return filename
+def last_run_time(collection: Collection, from_time: dt.datetime) -> dt.datetime:
+    # Adjust the current timestamp by the expected time for forecast run + archival so that a run of the script at any
+    # time is expected to succeed.
+    cur_timestamp = (from_time - collection.lead_time).timestamp()
+    run_interval = collection.interval.total_seconds()
+    last_run_ts = cur_timestamp // run_interval * run_interval
+    return dt.datetime.fromtimestamp(last_run_ts, tz=dt.timezone.utc)
 
 
-def get_archive_status(
+def get_param_status(
     model: str, param: Parameter, date: str, time: str
 ) -> list[list[int]]:
     """Query FDB to determine the archival status for the parameter from the forecast at the provided time.
@@ -98,15 +99,45 @@ def get_archive_status(
 
     status = []
     for member in range(num_members):
-        filter = filter_values
-        filter["number"] = str(member)
-        filter |= param.filter
-        steps_present = list_all_values(*["step"], **filter).get("step", [])
+        param_filter = filter_values
+        param_filter["number"] = str(member)
+        param_filter |= param.field_filter
+        steps_present = list_all_values(*["step"], **param_filter).get("step", [])
         steps_status = [1 if str(s) in steps_present else 0 for s in range(num_steps)]
         status.append(steps_status)
 
     return status
 
+
+def get_archive_status(model: str, forecast_time: dt.datetime) -> dict[str, list[list[int]]]:
+    """Check if each file of the forecast has been archived."""
+    date_str = forecast_time.strftime("%Y%m%d")
+    time_str = forecast_time.strftime("%H00")
+
+    archive_status = {}
+    for p in PARAMS:
+        param_status = get_param_status(model, p, date_str, time_str)
+        archive_status[p.file_suffix] = param_status
+    return archive_status
+
+
+def fx_filename(suffix: str, member: int, step: int) -> str:
+    """Construct the ICON fxshare filename for the provided parameters."""
+    filename_template = "_FXINP_lfrf{dd:02}{hh:02}000_{mmm:03}"
+    days = step // 24
+    hours = step % 24
+    filename = filename_template.format(dd=days, hh=hours, mmm=member) + suffix
+    return filename
+
+
+def get_failed_files(archive_status) -> list[str]:
+    failed_files = []
+    for file_suffix, param_status in archive_status.items():
+        for member, steps_status in enumerate(param_status):
+            for step, success in enumerate(steps_status):
+                if not success:
+                    failed_files.append(fx_filename(file_suffix, member, step))
+    return failed_files
 
 class ForecastStatus(IntEnum):
     MISSING = 0
@@ -119,8 +150,8 @@ def overall_status(status_dict: dict[list[list[int]]]) -> ForecastStatus:
     any_success = False
     all_success = True
     for status in status_dict.values():
-        any_success |= any([any(steps_stat) for steps_stat in status])
-        all_success &= all([all(steps_stat) for steps_stat in status])
+        any_success |= any(any(steps_stat) for steps_stat in status)
+        all_success &= all(all(steps_stat) for steps_stat in status)
 
     if all_success:
         return ForecastStatus.COMPLETE
@@ -144,82 +175,17 @@ def plot_status(ax, cmap, status: list[list[int]], file_suffix: str):
     )
 
 
-def main(model: str) -> bool:
-    collection = COLLECTIONS[model]
-    # The model runs at fixed intervals starting at hour 0 UTC each day. Adjust the current timestamp
-    # by the expected time for forecast run + archival so that a run of the script at any time is
-    # expected to succeed.
-    cur_timestamp = (datetime.now(timezone.utc) - collection.lead_time).timestamp()
-    run_interval = collection.interval * 60 * 60
-    last_run_ts = cur_timestamp // run_interval * run_interval
-    last_run_start = datetime.fromtimestamp(last_run_ts, tz=timezone.utc)
-    date_str = last_run_start.strftime("%Y%m%d")
-    time_str = last_run_start.strftime("%H00")
-
-    # Check that each file has been archived. Each file is a triple of param, number, and step.
-    archive_status = dict()
-    failed_files = []
-    for p in PARAMS:
-        param_status = get_archive_status(model, p, date_str, time_str)
-        archive_status[p.file_suffix] = param_status
-        for member, steps_status in enumerate(param_status):
-            for step, success in enumerate(steps_status):
-                if not success:
-                    failed_files.append(fx_filename(p.file_suffix, member, step))
-
-    # For past forecasts, only record their overall status since we have the full details already in previous runs.
-    # This will detect if a forecast is deleted early.
-    history_status = [overall_status(archive_status)]
-    history_datetime = [date_str + time_str]
-    past_start = last_run_start
-    for past_forecast in range(1, collection.forecasts):
-        past_start = past_start - timedelta(hours=collection.interval)
-        past_date_str = past_start.strftime("%Y%m%d")
-        past_time_str = past_start.strftime("%H00")
-        past_status = dict()
-        for p in PARAMS:
-            param_status = get_archive_status(model, p, past_date_str, past_time_str)
-            past_status[p.file_suffix] = param_status
-        history_status.append(overall_status(past_status))
-        history_datetime.append(past_date_str + past_time_str)
-
-    # Plot the archival status.
-    #
-    # Size the figure so the subplots have square boxes of the same size.
-    boxes_per_inch = 2.5
-    subplot_height = collection.members / boxes_per_inch
-    # Use a larger box for the historical status to prevent the longer labels from overlapping.
-    historical_box_size = 1.5
-    # Add height for the historical plot and vertical spacing between subplots.
-    plot_height = len(PARAMS) * subplot_height + historical_box_size + len(PARAMS)
-    height_ratios = [subplot_height for p in PARAMS]
-    height_ratios.append(historical_box_size)
-    plot_width = collection.steps / boxes_per_inch
-
-    fig, axs = plt.subplots(
-        len(PARAMS) + 1,
-        figsize=(plot_width, plot_height),
-        gridspec_kw={"height_ratios": height_ratios},
-        layout="constrained",
-    )
-    cmap = ListedColormap(["red", "green", "orange"])
-    fig.suptitle(f"Archival status for {model} run {date_str} {time_str}")
-
-    # Create a single grid for each file suffix.
-    for ax, param in zip(axs, PARAMS):
-        plot_status(ax, cmap, archive_status[param.file_suffix], param.file_suffix)
-
+def plot_history(ax, cmap, history_status, history_datetime):
     # Plot the historical archival status.
-    historical_ax = axs[len(PARAMS)]
-    historical_ax.set_anchor("W")
-    historical_ax.set_aspect("equal")
-    historical_ax.set_title(f"Historical archive status", loc="left")
-    historical_ax.set_xlabel("Archive date/time")
-    historical_ax.set_xticks(
-        [x + 0.5 for x in range(collection.forecasts)], labels=history_datetime
+    ax.set_anchor("W")
+    ax.set_aspect("equal")
+    ax.set_title("Historical archive status", loc="left")
+    ax.set_xlabel("Archive date/time")
+    ax.set_xticks(
+        [x + 0.5 for x in range(len(history_datetime))], labels=history_datetime
     )
-    historical_ax.set_yticks([], [])
-    historical_ax.pcolormesh(
+    ax.set_yticks([], [])
+    ax.pcolormesh(
         [history_status],
         cmap=cmap,
         shading="flat",
@@ -229,9 +195,58 @@ def main(model: str) -> bool:
         vmax=2,
     )
 
-    plt.savefig(f"heatmap_{model}_{date_str}{time_str}.png", bbox_inches="tight")
 
-    # Print the names of all files that failed archival.
+def create_figure(collection: Collection):
+    # Size the figure so the subplots have square boxes of the same size.
+    boxes_per_inch = 2.5
+    subplot_height = collection.members / boxes_per_inch
+    # Use a larger box for the historical status to prevent the longer labels from overlapping.
+    historical_box_size = 1.5
+    # Add height for the historical plot and vertical spacing between subplots.
+    plot_height = len(PARAMS) * subplot_height + historical_box_size + len(PARAMS)
+    height_ratios = [subplot_height for _ in PARAMS]
+    height_ratios.append(historical_box_size)
+    plot_width = collection.steps / boxes_per_inch
+
+    return plt.subplots(
+        len(PARAMS) + 1,
+        figsize=(plot_width, plot_height),
+        gridspec_kw={"height_ratios": height_ratios},
+        layout="constrained",
+    )
+
+
+def main(model: str) -> bool:
+    collection = COLLECTIONS[model]
+    last_run_start = last_run_time(collection, dt.datetime.now(dt.timezone.utc))
+    latest_archive_status = get_archive_status(model, last_run_start)
+
+    # For past forecasts, only record their overall status since we have the full details already in previous runs.
+    # This will detect if a forecast is deleted early.
+    history_status = [overall_status(latest_archive_status)]
+    history_datetime = [last_run_start.strftime("%y%m%d%H00")]
+    past_start = last_run_start
+    for _ in range(1, collection.forecasts):
+        past_start = past_start - collection.interval
+        past_status = get_archive_status(model, past_start)
+        history_status.append(overall_status(past_status))
+        history_datetime.append(past_start.strftime("%y%m%d%H00"))
+
+    # Plot the archival status.
+    fig, axs = create_figure(collection)
+    fig.suptitle(f"Archival status for {model} run {last_run_start.strftime('%y%m%d%H00')}")
+    cmap = ListedColormap(["red", "green", "orange"])
+
+    # Plot a status grid for each file suffix.
+    for ax, param in zip(axs, PARAMS):
+        plot_status(ax, cmap, latest_archive_status[param.file_suffix], param.file_suffix)
+
+    plot_history(axs[len(PARAMS)], cmap, history_status, history_datetime)
+
+    plt.savefig(f"heatmap_{model}_{last_run_start.strftime('%y%m%d%H00')}.png", bbox_inches="tight")
+
+    # Print the names of any files that failed archival.
+    failed_files = get_failed_files(latest_archive_status)
     if len(failed_files) > 0:
         logging.warning("The following files failed to archive: %s", failed_files)
         return False
@@ -251,6 +266,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    success = main(args.model)
-    if not success:
-        exit(1)
+    if not main(args.model):
+        sys.exit(1)
