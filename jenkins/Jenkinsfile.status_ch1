@@ -32,7 +32,7 @@ pipeline {
                         )
                     } finally {
                         copyArtifacts(
-                            projectName: '../ArchiveStatusBase/jenkins-archive-status',
+                            projectName: "../ArchiveStatusBase/${env.BRANCH_NAME}",
                             filter: '**/*heatmap*ch1*.png',
                             fingerprintArtifacts: true,
                             selector: lastCompleted()
