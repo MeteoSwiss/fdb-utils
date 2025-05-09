@@ -1,5 +1,5 @@
 import argparse
-import datetime as dt   # import datetime, timedelta, timezone
+import datetime as dt
 import logging
 import sys
 from dataclasses import dataclass
@@ -76,9 +76,9 @@ PARAMS: list[Parameter] = [
 def last_run_time(collection: Collection, from_time: dt.datetime) -> dt.datetime:
     # Adjust the current timestamp by the expected time for forecast run + archival so that a run of the script at any
     # time is expected to succeed.
-    cur_timestamp = (from_time - collection.lead_time).timestamp()
+    adjusted_timestamp = (from_time - collection.lead_time).timestamp()
     run_interval = collection.interval.total_seconds()
-    last_run_ts = cur_timestamp // run_interval * run_interval
+    last_run_ts = adjusted_timestamp // run_interval * run_interval
     return dt.datetime.fromtimestamp(last_run_ts, tz=dt.timezone.utc)
 
 
@@ -138,6 +138,7 @@ def get_failed_files(archive_status) -> list[str]:
                 if not success:
                     failed_files.append(fx_filename(file_suffix, member, step))
     return failed_files
+
 
 class ForecastStatus(IntEnum):
     MISSING = 0
