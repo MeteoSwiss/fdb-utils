@@ -19,12 +19,12 @@ class Collection:
     forecasts: int
     interval: dt.timedelta
     # How long after the start time of the run we expect the archive to be complete.
-    lead_time: dt.timedelta
+    delay: dt.timedelta
 
 
 @dataclass
 class Parameter:
-    key: str
+    id: str
     file_suffix: str
     is_constant: bool
     field_filter: dict[str, str]
@@ -37,7 +37,7 @@ COLLECTIONS: dict[str, Collection] = {
         steps=33,
         forecasts=8,
         interval=dt.timedelta(hours=3),
-        lead_time=dt.timedelta(hours=2, minutes=30),
+        delay=dt.timedelta(hours=2, minutes=30),
     ),
     "icon-ch2-eps": Collection(
         model="icon-ch2-eps",
@@ -45,7 +45,7 @@ COLLECTIONS: dict[str, Collection] = {
         steps=121,
         forecasts=4,
         interval=dt.timedelta(hours=6),
-        lead_time=dt.timedelta(hours=3, minutes=30),
+        delay=dt.timedelta(hours=3, minutes=30),
     ),
 }
 
@@ -59,16 +59,16 @@ COLLECTIONS: dict[str, Collection] = {
 # are present for a single parameter that exists in the file to determine the status.
 PARAMS: list[Parameter] = [
     Parameter(
-        key="500004", file_suffix="c", is_constant=True, field_filter={"levtype": "sfc"}
+        id="500004", file_suffix="c", is_constant=True, field_filter={"levtype": "sfc"}
     ),
     Parameter(
-        key="500006",
+        id="500006",
         file_suffix="p",
         is_constant=False,
         field_filter={"levelist": "200", "levtype": "pl"},
     ),
     Parameter(
-        key="500001",
+        id="500001",
         file_suffix="",
         is_constant=False,
         field_filter={"levelist": "1", "levtype": "ml"},
@@ -79,7 +79,7 @@ PARAMS: list[Parameter] = [
 def last_run_time(collection: Collection, from_time: dt.datetime) -> dt.datetime:
     # Adjust the current timestamp by the expected time for forecast run + archival so that a run of the script at any
     # time is expected to succeed.
-    adjusted_timestamp = (from_time - collection.lead_time).timestamp()
+    adjusted_timestamp = (from_time - collection.delay).timestamp()
     run_interval = collection.interval.total_seconds()
     last_run_ts = adjusted_timestamp // run_interval * run_interval
     return dt.datetime.fromtimestamp(last_run_ts, tz=dt.timezone.utc)
@@ -98,7 +98,7 @@ def get_param_status(
         num_steps = 1
     else:
         num_steps = COLLECTIONS[model].steps
-    filter_values = {"param": param.key, "model": model, "date": date, "time": time}
+    filter_values = {"param": param.id, "model": model, "date": date, "time": time}
 
     status = []
     for member in range(num_members):

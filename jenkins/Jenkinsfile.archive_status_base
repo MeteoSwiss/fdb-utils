@@ -81,8 +81,7 @@ Please see the attached image and the Jenkins logs for more details.
 Regards,
 MCH Jenkins
                 """,
-                // Change to .p_polytope after verifying that the pipeline works correctly.
-                to: "Samuel.Weyerman@meteoswiss.ch",
+                to: ".p_polytope@meteoswiss.ch",
                 recipientProviders: [requestor(), developers()]
             )
         }
