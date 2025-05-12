@@ -13,6 +13,7 @@ from fdb_utils.user.describe import list_all_values
 
 @dataclass
 class Collection:
+    model: str
     members: int
     steps: int
     forecasts: int
@@ -31,18 +32,20 @@ class Parameter:
 
 COLLECTIONS: dict[str, Collection] = {
     "icon-ch1-eps": Collection(
+        model="icon-ch1-eps",
         members=11,
         steps=33,
         forecasts=8,
         interval=dt.timedelta(hours=3),
-        lead_time=dt.timedelta(hours=2, minutes=30)
+        lead_time=dt.timedelta(hours=2, minutes=30),
     ),
     "icon-ch2-eps": Collection(
+        model="icon-ch2-eps",
         members=21,
         steps=121,
         forecasts=4,
         interval=dt.timedelta(hours=6),
-        lead_time=dt.timedelta(hours=3, minutes=30)
+        lead_time=dt.timedelta(hours=3, minutes=30),
     ),
 }
 
@@ -109,7 +112,9 @@ def get_param_status(
     return status
 
 
-def get_archive_status(model: str, forecast_time: dt.datetime) -> dict[str, list[list[int]]]:
+def get_archive_status(
+    model: str, forecast_time: dt.datetime
+) -> dict[str, list[list[int]]]:
     """Check if each file of the forecast has been archived."""
     date_str = forecast_time.strftime("%Y%m%d")
     time_str = forecast_time.strftime("%H00")
@@ -146,7 +151,7 @@ class ForecastStatus(IntEnum):
     INCOMPLETE = 2
 
 
-def overall_status(status_dict: dict[list[list[int]]]) -> ForecastStatus:
+def summary_status(status_dict: dict[list[list[int]]]) -> ForecastStatus:
     """Determine the archival status of the forecast as a whole."""
     any_success = False
     all_success = True
@@ -159,6 +164,19 @@ def overall_status(status_dict: dict[list[list[int]]]) -> ForecastStatus:
     if any_success:
         return ForecastStatus.INCOMPLETE
     return ForecastStatus.MISSING
+
+
+def historical_summary_status(last_run_start: dt.datetime, collection: Collection):
+    """Return the summary status for all past forecasts that should still exist."""
+    history_status = []
+    history_datetime = []
+    past_start = last_run_start
+    for _ in range(1, collection.forecasts):
+        past_start = past_start - collection.interval
+        past_status = get_archive_status(collection.model, past_start)
+        history_status.append(summary_status(past_status))
+        history_datetime.append(past_start.strftime("%y%m%d%H00"))
+    return history_status, history_datetime
 
 
 def plot_status(ax, status: list[list[int]], file_suffix: str):
@@ -224,20 +242,19 @@ def main(model: str) -> bool:
     last_run_start = last_run_time(collection, dt.datetime.now(dt.timezone.utc))
     latest_archive_status = get_archive_status(model, last_run_start)
 
-    # For past forecasts, only record their overall status since we have the full details already in previous runs.
-    # This will detect if a forecast is deleted early.
-    history_status = [overall_status(latest_archive_status)]
-    history_datetime = [last_run_start.strftime("%y%m%d%H00")]
-    past_start = last_run_start
-    for _ in range(1, collection.forecasts):
-        past_start = past_start - collection.interval
-        past_status = get_archive_status(model, past_start)
-        history_status.append(overall_status(past_status))
-        history_datetime.append(past_start.strftime("%y%m%d%H00"))
+    # For past forecasts, we have the full details already in previous runs. We only want to detect and alert if a
+    # forecast is deleted early.
+    history_status, history_datetime = historical_summary_status(
+        last_run_time, collection
+    )
+    history_status.insert(0, summary_status(latest_archive_status))
+    history_datetime.insert(0, last_run_start.strftime("%y%m%d%H00"))
 
     # Plot the archival status.
     fig, axs = create_figure(collection)
-    fig.suptitle(f"Archival status for {model} run {last_run_start.strftime('%y%m%d%H00')}")
+    fig.suptitle(
+        f"Archival status for {model} run {last_run_start.strftime('%y%m%d%H00')}"
+    )
 
     # Plot a status grid for each file suffix.
     for ax, param in zip(axs, PARAMS):
@@ -245,19 +262,23 @@ def main(model: str) -> bool:
 
     plot_history(axs[len(PARAMS)], history_status, history_datetime)
 
-    plt.savefig(f"heatmap_{model}_{last_run_start.strftime('%y%m%d%H00')}.png", bbox_inches="tight")
+    plt.savefig(
+        f"heatmap_{model}_{last_run_start.strftime('%y%m%d%H00')}.png",
+        bbox_inches="tight",
+    )
 
-    # Print the names of any files that failed archival.
-    failed_files = get_failed_files(latest_archive_status)
-    if len(failed_files) > 0:
-        logging.warning("The following files failed to archive: %s", failed_files)
+    # If any files in the latest forecast failed, print the names and return failure.
+    if history_status[0] != ForecastStatus.COMPLETE:
+        logging.warning(
+            "The following files failed to archive: %s",
+            get_failed_files(latest_archive_status),
+        )
         return False
 
-    for history_stat in history_status:
-        if history_stat is ForecastStatus.MISSING:
-            # Only report failure on missing forecast since an incomplete forecast will have
-            # alerted us already.
-            return False
+    if any(status == ForecastStatus.MISSING for status in history_status):
+        # Only report failure on missing forecast since an incomplete forecast will have
+        # alerted us already.
+        return False
     return True
 
 

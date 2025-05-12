@@ -12,7 +12,7 @@ def test_overall_status_missing():
         "p1": [[0, 0, 0, 0], [0, 0, 0, 0]],
         "p2": [[0], [0], [0], [0]],
     }
-    assert cas.overall_status(status_dict) == cas.ForecastStatus.MISSING
+    assert cas.summary_status(status_dict) == cas.ForecastStatus.MISSING
 
 
 def test_overall_status_complete():
@@ -20,7 +20,7 @@ def test_overall_status_complete():
         "p1": [[1, 1, 1, 1], [1, 1, 1, 1]],
         "p2": [[1], [1], [1], [1]],
     }
-    assert cas.overall_status(status_dict) == cas.ForecastStatus.COMPLETE
+    assert cas.summary_status(status_dict) == cas.ForecastStatus.COMPLETE
 
 
 def test_overall_status_incomplete():
@@ -28,7 +28,7 @@ def test_overall_status_incomplete():
         "p1": [[1, 1, 1, 0], [1, 1, 1, 1]],
         "p2": [[1], [1], [1], [1]],
     }
-    assert cas.overall_status(status_dict) == cas.ForecastStatus.INCOMPLETE
+    assert cas.summary_status(status_dict) == cas.ForecastStatus.INCOMPLETE
 
 
 def test_fx_filename():
@@ -145,14 +145,16 @@ def test_plot_history():
     assert len(ax.get_yticks()) == 0
 
 
-def return_steps(missing_values: dict[str, dict[str, list[int]]]):
+def return_steps(missing_values: dict[tuple[str], dict[str, list[int]]]):
     def list_all_values_mock(*filter_keys: str, **filter_by_values: str):
-        param = filter_by_values["param"]
-        number = filter_by_values["number"]
         model = filter_by_values["model"]
-
+        param = filter_by_values["param"]
         num_steps = 1 if param == "500004" else cas.COLLECTIONS[model].steps
-        missing_steps = missing_values[param].get(number, [])
+
+        number = filter_by_values["number"]
+        date = filter_by_values["date"]
+        time = filter_by_values["time"]
+        missing_steps = missing_values.get((param, date, time), {}).get(number, [])
         steps = []
         for s in range(num_steps):
             if s not in missing_steps:
@@ -162,13 +164,12 @@ def return_steps(missing_values: dict[str, dict[str, list[int]]]):
     return list_all_values_mock
 
 
-# mock out list_all_values
 @patch("fdb_utils.ci.check_archive_status.list_all_values")
 def test_get_archive_status(list_values, tmp_path, data_dir):
     missing_values = {
-        "500004": {"0": [0], "1": [0]},
-        "500006": {"0": [30, 31], "9": [0, 1]},
-        "500001": {"1": [0], "2": [10]},
+        ("500004", "20250202", "0300"): {"0": [0], "1": [0]},
+        ("500006", "20250202", "0300"): {"0": [30, 31], "9": [0, 1]},
+        ("500001", "20250202", "0300"): {"1": [0], "2": [10]},
     }
     list_values.side_effect = return_steps(missing_values)
 
@@ -191,3 +192,43 @@ def test_get_archive_status(list_values, tmp_path, data_dir):
     for param_status in archive_status.values():
         status_sum += sum(sum(row) for row in param_status)
     assert status_sum == 11 + (11 * 33) + (11 * 33) - 8
+
+
+@patch("fdb_utils.ci.check_archive_status.list_all_values")
+def test_historical_archive_status(list_values, tmp_path, data_dir):
+    # Set one incomplete forecast and one missing forecast.
+    missing_values = {
+        ("500004", "20250202", "0000"): {"0": [0]},
+        ("500004", "20250201", "2100"): {str(n): [0] for n in range(11)},
+        ("500006", "20250201", "2100"): {
+            str(n): [s for s in range(33)] for n in range(11)
+        },
+        ("500001", "20250201", "2100"): {
+            str(n): [s for s in range(33)] for n in range(11)
+        },
+    }
+    list_values.side_effect = return_steps(missing_values)
+
+    first_forecast_time = dt.datetime.fromisoformat("2025-02-02T03:00Z")
+    historical_summary, historical_dates = cas.historical_summary_status(
+        first_forecast_time, cas.COLLECTIONS["icon-ch1-eps"]
+    )
+
+    assert historical_summary == [
+        cas.ForecastStatus.INCOMPLETE,
+        cas.ForecastStatus.MISSING,
+        cas.ForecastStatus.COMPLETE,
+        cas.ForecastStatus.COMPLETE,
+        cas.ForecastStatus.COMPLETE,
+        cas.ForecastStatus.COMPLETE,
+        cas.ForecastStatus.COMPLETE,
+    ]
+    assert historical_dates == [
+        "2502020000",
+        "2502012100",
+        "2502011800",
+        "2502011500",
+        "2502011200",
+        "2502010900",
+        "2502010600",
+    ]
