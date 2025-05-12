@@ -245,7 +245,7 @@ def main(model: str) -> bool:
     # For past forecasts, we have the full details already in previous runs. We only want to detect and alert if a
     # forecast is deleted early.
     history_status, history_datetime = historical_summary_status(
-        last_run_time, collection
+        last_run_start, collection
     )
     history_status.insert(0, summary_status(latest_archive_status))
     history_datetime.insert(0, last_run_start.strftime("%y%m%d%H00"))
