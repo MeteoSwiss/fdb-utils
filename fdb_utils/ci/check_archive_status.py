@@ -161,7 +161,8 @@ def overall_status(status_dict: dict[list[list[int]]]) -> ForecastStatus:
     return ForecastStatus.MISSING
 
 
-def plot_status(ax, cmap, status: list[list[int]], file_suffix: str):
+def plot_status(ax, status: list[list[int]], file_suffix: str):
+    cmap = ListedColormap(["red", "green"])
     num_members = len(status)
     num_steps = len(status[0])
     ax.set_anchor("W")
@@ -172,12 +173,13 @@ def plot_status(ax, cmap, status: list[list[int]], file_suffix: str):
     ax.set_ylabel("member")
     ax.set_yticks([x + 0.5 for x in range(num_members)], labels=range(num_members))
     ax.pcolormesh(
-        status, cmap=cmap, shading="flat", edgecolors="k", linewidths=1, vmin=0, vmax=2
+        status, cmap=cmap, shading="flat", edgecolors="k", linewidths=1, vmin=0, vmax=1
     )
 
 
-def plot_history(ax, cmap, history_status, history_datetime):
+def plot_history(ax, history_status, history_datetime):
     # Plot the historical archival status.
+    cmap = ListedColormap(["red", "green", "orange"])
     ax.set_anchor("W")
     ax.set_aspect("equal")
     ax.set_title("Historical archive status", loc="left")
@@ -236,13 +238,12 @@ def main(model: str) -> bool:
     # Plot the archival status.
     fig, axs = create_figure(collection)
     fig.suptitle(f"Archival status for {model} run {last_run_start.strftime('%y%m%d%H00')}")
-    cmap = ListedColormap(["red", "green", "orange"])
 
     # Plot a status grid for each file suffix.
     for ax, param in zip(axs, PARAMS):
-        plot_status(ax, cmap, latest_archive_status[param.file_suffix], param.file_suffix)
+        plot_status(ax, latest_archive_status[param.file_suffix], param.file_suffix)
 
-    plot_history(axs[len(PARAMS)], cmap, history_status, history_datetime)
+    plot_history(axs[len(PARAMS)], history_status, history_datetime)
 
     plt.savefig(f"heatmap_{model}_{last_run_start.strftime('%y%m%d%H00')}.png", bbox_inches="tight")
 
