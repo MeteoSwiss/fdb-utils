@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from enum import IntEnum
 
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
+from matplotlib.figure import Figure
 
 from fdb_utils.user.describe import list_all_values
 
@@ -105,7 +107,9 @@ def get_param_status(
         param_filter = filter_values
         param_filter["number"] = str(member)
         param_filter |= param.field_filter
-        steps_present = list_all_values(*["step"], **param_filter).get("step", [])
+        steps_present: set[str | int] = list_all_values(*["step"], **param_filter).get(
+            "step", set()
+        )
         steps_status = [1 if str(s) in steps_present else 0 for s in range(num_steps)]
         status.append(steps_status)
 
@@ -135,7 +139,7 @@ def fx_filename(suffix: str, member: int, step: int) -> str:
     return filename
 
 
-def get_failed_files(archive_status) -> list[str]:
+def get_failed_files(archive_status: dict[str, list[list[int]]]) -> list[str]:
     failed_files = []
     for file_suffix, param_status in archive_status.items():
         for member, steps_status in enumerate(param_status):
@@ -151,11 +155,11 @@ class ForecastStatus(IntEnum):
     INCOMPLETE = 2
 
 
-def summary_status(status_dict: dict[list[list[int]]]) -> ForecastStatus:
+def summary_status(archive_status: dict[str, list[list[int]]]) -> ForecastStatus:
     """Determine the archival status of the forecast as a whole."""
     any_success = False
     all_success = True
-    for status in status_dict.values():
+    for status in archive_status.values():
         any_success |= any(any(steps_stat) for steps_stat in status)
         all_success &= all(all(steps_stat) for steps_stat in status)
 
@@ -166,7 +170,9 @@ def summary_status(status_dict: dict[list[list[int]]]) -> ForecastStatus:
     return ForecastStatus.MISSING
 
 
-def historical_summary_status(last_run_start: dt.datetime, collection: Collection):
+def historical_summary_status(
+    last_run_start: dt.datetime, collection: Collection
+) -> tuple[list[ForecastStatus], list[str]]:
     """Return the summary status for all past forecasts that should still exist."""
     history_status = []
     history_datetime = []
@@ -179,7 +185,7 @@ def historical_summary_status(last_run_start: dt.datetime, collection: Collectio
     return history_status, history_datetime
 
 
-def plot_status(ax, status: list[list[int]], file_suffix: str):
+def plot_status(ax: Axes, status: list[list[int]], file_suffix: str) -> None:
     cmap = ListedColormap(["red", "green"])
     num_members = len(status)
     num_steps = len(status[0])
@@ -187,15 +193,22 @@ def plot_status(ax, status: list[list[int]], file_suffix: str):
     ax.set_aspect("equal")
     ax.set_title(f"Files _FXINP_lfrf<DDHH>0000_<mmm>{file_suffix}", loc="left")
     ax.set_xlabel("step")
-    ax.set_xticks([x + 0.5 for x in range(num_steps)], labels=range(num_steps))
+    ax.set_xticks(
+        [x + 0.5 for x in range(num_steps)], labels=[str(s) for s in range(num_steps)]
+    )
     ax.set_ylabel("member")
-    ax.set_yticks([x + 0.5 for x in range(num_members)], labels=range(num_members))
+    ax.set_yticks(
+        [x + 0.5 for x in range(num_members)],
+        labels=[str(m) for m in range(num_members)],
+    )
     ax.pcolormesh(
         status, cmap=cmap, shading="flat", edgecolors="k", linewidths=1, vmin=0, vmax=1
     )
 
 
-def plot_history(ax, history_status, history_datetime):
+def plot_history(
+    ax: Axes, history_status: list[ForecastStatus], history_datetime: list[str]
+) -> None:
     # Plot the historical archival status.
     cmap = ListedColormap(["red", "green", "orange"])
     ax.set_anchor("W")
@@ -217,7 +230,7 @@ def plot_history(ax, history_status, history_datetime):
     )
 
 
-def create_figure(collection: Collection):
+def create_figure(collection: Collection) -> tuple[Figure, list[Axes]]:
     # Size the figure so the subplots have square boxes of the same size.
     boxes_per_inch = 2.5
     subplot_height = collection.members / boxes_per_inch
