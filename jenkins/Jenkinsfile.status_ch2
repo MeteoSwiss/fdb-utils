@@ -1,0 +1,53 @@
+// Jenkins pipeline that runs periodically to check the status of the archive
+// of the ICON-CH2-EPS model to FDB.
+pipeline {
+    options {
+        disableConcurrentBuilds()
+    }
+
+    agent {
+        label 'balfrin'
+    }
+
+    triggers {
+        // We expect the ICON-CH2-EPS forecast to be fully archived 3.5 hours after the job start.
+        cron('TZ=UTC\n30 3,9,15,21 * * *')
+    }
+
+    stages {
+        stage('run status check') {
+            when {
+                anyOf {
+                    not { triggeredBy 'timer' };
+                    branch 'main'
+                }
+            }
+            steps {
+                script {
+                    try {
+                        build(
+                            job: "../ArchiveStatusBase/${env.BRANCH_NAME}",
+                            propagate: true,
+                            parameters: [string(name: 'model', value: 'icon-ch2-eps')]
+                        )
+                    } finally {
+                        copyArtifacts(
+                            projectName: "../ArchiveStatusBase/${env.BRANCH_NAME}",
+                            filter: '**/*heatmap*ch2*.png',
+                            fingerprintArtifacts: true,
+                            selector: lastCompleted()
+                        )
+                        archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up workspace'
+            deleteDir()
+        }
+    }
+}

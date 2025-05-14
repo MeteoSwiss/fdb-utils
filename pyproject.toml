@@ -17,6 +17,7 @@ priority = "primary"
 name = "pypi-mch-publish"
 # only hub entrypoint can be used for publishing libraries (accessible from CI/CD server)
 url = "https://hub.meteoswiss.ch/nexus/repository/python-mch/"
+priority = "explicit"
 
 [tool.poetry.scripts]
 fdb-utils = "fdb_utils.main:app"
@@ -25,7 +26,8 @@ fdb-utils = "fdb_utils.main:app"
 python = ">=3.11,<3.12"
 typer = "^0.12.3"
 eccodes = "^2.37.0"
-pyfdb = { git = "https://github.com/ecmwf/pyfdb.git", branch = "master" }
+matplotlib = "^3.10"
+pyfdb = { url = "https://github.com/ecmwf/pyfdb/archive/refs/tags/0.0.3.zip" }
 packaging = "^24.1"
 cffi = "^1.16.0"
 

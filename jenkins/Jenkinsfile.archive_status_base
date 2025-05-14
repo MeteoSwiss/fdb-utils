@@ -1,0 +1,93 @@
+// Base pipeline to verify that the latest forecast runs have been fully
+// archived to FDB. This pipeline configures the environment and runs the check,
+// but it is expected that it is run from a periodic pipeline for a specific
+// model.
+pipeline {
+    options {
+        disableConcurrentBuilds()
+        timeout(time: 1, unit: 'HOURS')
+    }
+
+    parameters {
+        choice(name: 'model', choices: ['icon-ch1-eps', 'icon-ch2-eps'], description: 'The name of the model to check the status of.')
+    }
+
+    agent {
+        label 'balfrin'
+    }
+
+    environment{
+        FDB5_CONFIG_FILE = '/scratch/mch/trajond/fdb-realtime-lcm/realtime_config.yaml'
+        FDB5_HOME = '/scratch/mch/trajond/spack-view'
+        ECCODES_HOME = '/scratch/mch/trajond/spack-view'
+        GRIB_DEFINITION_PATH = '/scratch/mch/trajond/eccodes-cosmo-resources/definitions:/scratch/mch/trajond/eccodes/definitions'
+        VENV_DIR = '$(pwd)/.venv'
+        POETRY_VERSION = "1.8.1"
+    }
+
+    stages {
+        stage('setup python env') {
+            steps {
+                sh '''#!/usr/bin/env bash
+                module use /mch-environment/v8/modules/
+                module load python/3.11.7
+                echo "Installing poetry in venv at \$(pwd)/.venv"
+                python3 -m venv .venv
+                .venv/bin/pip install poetry==${POETRY_VERSION}
+                .venv/bin/poetry install
+                '''
+            }
+        }
+
+        stage('test') {
+            steps {
+                sh '''#!/usr/bin/env bash
+                .venv/bin/poetry run pytest
+                '''
+            }
+        }
+
+        stage('check archive') {
+            steps {
+                script {
+                    try {
+                        sh '''#!/usr/bin/env bash
+                        .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
+                        '''
+                    } finally {
+                        archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            // Send email with links to artifacts if the build fails
+            emailext(subject: "Failed FDB Archive of ${params.model}",
+                attachmentsPattern: '**/heatmap*.png',
+                body: """
+The pipeline which checks the FDB archive failed:
+${env.BUILD_URL}
+
+Possible causes are:
+*  The most recent poller run failed
+*  The most recent poller run is delayed
+*  An earlier archive is missing due to job failure or early deletion
+
+Please see the attached image and the Jenkins logs for more details.
+
+Regards,
+MCH Jenkins
+                """,
+                to: "p_polytope@meteoswiss.ch",
+                recipientProviders: [requestor(), developers()]
+            )
+        }
+        cleanup {
+            echo 'Cleaning up workspace'
+            deleteDir()
+        }
+    }
+}
