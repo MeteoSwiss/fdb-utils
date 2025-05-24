@@ -88,11 +88,12 @@ pipeline {
                     }
                 }
             }
-#            post {
-#                always {
-#                    junit keepLongStdio: true, testResults: 'junit*.xml'
-#                }
-#            }
+/*            post {
+                always {
+                    junit keepLongStdio: true, testResults: 'junit*.xml'
+                }
+            }
+*/
         }
 
         stage('Run Pylint') {
