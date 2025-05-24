@@ -2308,4 +2308,4 @@ reference = "pypi-mch"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "293740ca1dca21b241c74d7f8c369db3be03755e0095bfdeb4758efffd2b9277"
+content-hash = "f1234948df4df6defe034b9fff456ebce4820e6082b40e367de64069728336d1"
