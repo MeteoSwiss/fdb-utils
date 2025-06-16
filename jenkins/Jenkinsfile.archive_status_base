@@ -71,12 +71,14 @@ pipeline {
 The pipeline which checks the FDB archive failed:
 ${env.BUILD_URL}
 
-Possible causes are:
+Most likely causes are:
 *  The most recent poller run failed
 *  The most recent poller run is delayed
 *  An earlier archive is missing due to job failure or early deletion
 
 Please see the attached image and the Jenkins logs for more details.
+
+For troubleshooting tips and details on how to read the image and logs, see https://meteoswiss.atlassian.net/wiki/spaces/IW2/pages/326205490/Realtime+FDB+Deployment#Troubleshooting
 
 Regards,
 MCH Jenkins
