@@ -2,6 +2,14 @@
 // archived to FDB. This pipeline configures the environment and runs the check,
 // but it is expected that it is run from a periodic pipeline for a specific
 // model.
+
+def emailTo(branch) {
+    // Only mail the distribution list for runs on the main branch.
+    if ('main'.equals(branch))
+        return 'p_polytope@meteoswiss.ch'
+    return ''
+}
+
 pipeline {
     options {
         disableConcurrentBuilds()
@@ -16,13 +24,13 @@ pipeline {
         label 'balfrin'
     }
 
-    environment{
+    environment {
         FDB5_CONFIG_FILE = '/scratch/mch/trajond/fdb-realtime-lcm/realtime_config.yaml'
         FDB5_HOME = '/scratch/mch/trajond/spack-view'
         ECCODES_HOME = '/scratch/mch/trajond/spack-view'
         GRIB_DEFINITION_PATH = '/scratch/mch/trajond/eccodes-cosmo-resources/definitions:/scratch/mch/trajond/eccodes/definitions'
         VENV_DIR = '$(pwd)/.venv'
-        POETRY_VERSION = "1.8.1"
+        POETRY_VERSION = '1.8.1'
     }
 
     stages {
@@ -71,17 +79,19 @@ pipeline {
 The pipeline which checks the FDB archive failed:
 ${env.BUILD_URL}
 
-Possible causes are:
+Most likely causes are:
 *  The most recent poller run failed
 *  The most recent poller run is delayed
 *  An earlier archive is missing due to job failure or early deletion
 
 Please see the attached image and the Jenkins logs for more details.
 
+For troubleshooting tips and details on how to read the image and logs, see https://meteoswiss.atlassian.net/wiki/spaces/IW2/pages/326205490/Realtime+FDB+Deployment#Troubleshooting
+
 Regards,
 MCH Jenkins
                 """,
-                to: "p_polytope@meteoswiss.ch",
+                to: emailTo(env.BRANCH_NAME),
                 recipientProviders: [requestor(), developers()]
             )
         }
