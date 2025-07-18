@@ -1530,43 +1530,31 @@ url = "https://service.meteoswiss.ch/nexus/repository/python-all/simple"
 reference = "pypi-mch"
 
 [[package]]
-name = "pyeccodes"
-version = "0.1.1"
-description = "Experimental pure Python version of eccodes"
+name = "pyfdb"
+version = "0.1.2"
+description = "Python interface to FDB"
 optional = false
-python-versions = "*"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "pyeccodes-0.1.1.tar.gz", hash = "sha256:b5b5e62b8ea3fcd069caa0dec48d7f67889a6eadf198e015ec029839935fe596"},
+    {file = "pyfdb-0.1.2-py3-none-any.whl", hash = "sha256:31af9d05063440253c9ab48b4e96fc6f1e76f5e5fbf0cdea5f19dbad1593e837"},
+    {file = "pyfdb-0.1.2.tar.gz", hash = "sha256:cbb79f159db6bf5453d0f3a26504624ce0fc9450ea9e2d8f7691705506dbf276"},
 ]
 
 [package.dependencies]
-numpy = "*"
+cffi = "*"
+eccodes = ">=2.39.1"
+findlibs = "*"
+packaging = "*"
+
+[package.extras]
+dev = ["black", "flake8", "isort", "tox (>=4.19)"]
+test = ["gitpython", "pytest", "pytest-cov", "pytest-flakes"]
 
 [package.source]
 type = "legacy"
 url = "https://service.meteoswiss.ch/nexus/repository/python-all/simple"
 reference = "pypi-mch"
-
-[[package]]
-name = "pyfdb"
-version = "0.0.3"
-description = "Python interface to FDB"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "0.0.3.zip", hash = "sha256:9ae49204ddf6672d58776206d97eeb547e6898ed359e427f838ce9cece6d43cb"},
-]
-
-[package.dependencies]
-cffi = "*"
-findlibs = "*"
-pyeccodes = "*"
-
-[package.source]
-type = "url"
-url = "https://github.com/ecmwf/pyfdb/archive/refs/tags/0.0.3.zip"
 
 [[package]]
 name = "pygments"
@@ -2308,4 +2296,4 @@ reference = "pypi-mch"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "f1234948df4df6defe034b9fff456ebce4820e6082b40e367de64069728336d1"
+content-hash = "66dd939549a1ea3961f8c049e74184a761d0d8ef05fbde37631aefe02d442d54"
