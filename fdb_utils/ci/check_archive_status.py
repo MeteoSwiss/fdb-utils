@@ -289,8 +289,6 @@ def main(model: str) -> bool:
         return False
 
     if any(status == ForecastStatus.MISSING for status in history_status):
-        # Only report failure on missing forecast since an incomplete forecast will have
-        # alerted us already.
         logging.warning(
             "The forecast is missing for the following dates: %s",
             [
@@ -299,7 +297,6 @@ def main(model: str) -> bool:
                 if status == ForecastStatus.MISSING
             ],
         )
-        return False
     return True
 
 
