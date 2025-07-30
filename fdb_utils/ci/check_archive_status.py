@@ -181,7 +181,7 @@ def historical_summary_status(
         past_start = past_start - collection.interval
         past_status = get_archive_status(collection.model, past_start)
         history_status.append(summary_status(past_status))
-        history_datetime.append(past_start.strftime("%y%m%d%H00"))
+        history_datetime.append(past_start.strftime("%d-%m-%y %H"))
     return history_status, history_datetime
 
 
@@ -261,12 +261,12 @@ def main(model: str) -> bool:
         last_run_start, collection
     )
     history_status.insert(0, summary_status(latest_archive_status))
-    history_datetime.insert(0, last_run_start.strftime("%y%m%d%H00"))
+    history_datetime.insert(0, last_run_start.strftime("%d-%m-%y %H"))
 
     # Plot the archival status.
     fig, axs = create_figure(collection)
     fig.suptitle(
-        f"Archival status for {model} run {last_run_start.strftime('%y%m%d%H00')}"
+        f"Archival status for {model} run {last_run_start.strftime("%d-%m-%y %HUTC")}"
     )
 
     # Plot a status grid for each file suffix.
@@ -276,7 +276,7 @@ def main(model: str) -> bool:
     plot_history(axs[len(PARAMS)], history_status, history_datetime)
 
     plt.savefig(
-        f"heatmap_{model}_{last_run_start.strftime('%y%m%d%H00')}.png",
+        f"heatmap_{model}_{last_run_start.strftime("%d%m%y-%H")}.png",
         bbox_inches="tight",
     )
 
