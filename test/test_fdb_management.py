@@ -147,7 +147,7 @@ def _generate_file_to_upload(
     if not random:
         dst_folder = Path(base_path / f"{file_timestamp}_636/fxshare")
     else:
-        random_str = "".join(choice(string.ascii_lowercase) for i in range(10))
+        random_str = "".join(choice(string.ascii_lowercase) for _ in range(10))
         dst_folder = Path(base_path / random_str)
 
     dst_folder.mkdir(parents=True, exist_ok=True)
@@ -158,41 +158,35 @@ def _generate_file_to_upload(
 
     return file_to_upload, file_name, file_timestamp
 
+LEVEL_TYPE_MAPPING = {
+    "ml": "hybrid",
+    "sfc": "surface",
+    "pl": "isobaricInPa"
+}
 
-def _modify_grib_file(
-    path: Path,
+def _build_modification_string(
     date: str | None = None,
     time: str | None = None,
     step: int | str | None = None,
     number: int | None = None,
-    levtype: str | None = None,
-) -> None:
-    # Modify keys in a GRIB file for testing.
-
-    modification = ""
+    levtype: str | None = None) -> str:
+    modification = []
 
     if date is not None:
-        modification += f"dataDate={date},"
+        modification.append(f"dataDate={date}")
     if time is not None:
-        modification += f"dataTime={time},"
+        modification.append(f"dataTime={time}")
     if step is not None:
-        modification += f"step={step},"
+        modification.append(f"step={step}")
     if number is not None:
-        modification += f"number={number},"
+        modification.append(f"number={number}")
     if levtype is not None:
-        if levtype == "ml":
-            typeoflevel = "hybrid"
-        if levtype == "sfc":
-            typeoflevel = "surface"
-        if levtype == "pl":
-            typeoflevel = "isobaricInPa"
-        modification += f"typeOfLevel={typeoflevel},"
+        modification.append(f"typeOfLevel={LEVEL_TYPE_MAPPING.get(levtype, '')}")
 
-    if modification.endswith(","):
-        modification = modification[:-1]
+    return ",".join(modification)
 
-    print("Modifying GRIB file: %s %s" % (path, modification))
 
+def _process_grib_file(path: Path, modification: str) -> int:
     cnt = 0
     with open(path, "rb") as fi, open(str(path) + "_modified", "wb") as fo:
         while 1:
@@ -202,10 +196,17 @@ def _modify_grib_file(
                 break
 
             eccodes.codes_set_key_vals(gid, modification)
-
             eccodes.codes_write(gid, fo)
-
             eccodes.codes_release(gid)
+
+    return cnt
+
+def _verify_modifications(
+    path: Path,
+    date: str | None = None,
+    time: str | None = None,
+    step: int | str | None = None,
+    number: int | None = None):
 
     with open(str(path) + "_modified", "rb") as f:
         gid = eccodes.codes_grib_new_from_file(f)
@@ -218,6 +219,25 @@ def _modify_grib_file(
         if number is not None:
             assert eccodes.codes_get(gid, "number", int) == int(number)
         eccodes.codes_release(gid)
+
+
+def _modify_grib_file(
+    path: Path,
+    date: str | None = None,
+    time: str | None = None,
+    step: int | str | None = None,
+    number: int | None = None,
+    levtype: str | None = None,
+) -> None:
+    """Modify keys in a GRIB file for testing."""
+
+    modification = _build_modification_string(date, time, step, number, levtype)
+
+    print("Modifying GRIB file: %s %s" % (path, modification))
+
+    cnt = _process_grib_file(path, modification)
+
+    _verify_modifications(path, date, time, step, number)
 
     shutil.move(str(path) + "_modified", str(path))
 
