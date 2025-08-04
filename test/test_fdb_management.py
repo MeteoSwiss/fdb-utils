@@ -186,7 +186,7 @@ def _build_modification_string(
     return ",".join(modification)
 
 
-def _process_grib_file(path: Path, modification: str):
+def _process_grib_file(path: Path, modification: str) -> int:
     cnt = 0
     with open(path, "rb") as fi, open(str(path) + "_modified", "wb") as fo:
         while 1:
