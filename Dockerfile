@@ -4,12 +4,14 @@ FROM dockerhub.apps.cp.meteoswiss.ch/numericalweatherpredictions/fdb-data-poller
 
 FROM dockerhub.apps.cp.meteoswiss.ch/mch/python-3.11
 
-RUN mkdir -p /root/spack-root/
+RUN mkdir -p /opt/spack-root/
+RUN mkdir -p /opt/spack-view/
 
-COPY --from=dependencies /root/spack-root/ /root/spack-root/
+COPY --from=dependencies /opt/spack-root /opt/spack-root/
+COPY --from=dependencies /opt/spack-view /opt/spack-view/
 
-ENV ECCODES_DIR=/root/spack-root/eccodes/
-ENV FDB5_HOME=/root/spack-root/fdb/
+ENV ECCODES_DIR=/opt/spack-view/
+ENV FDB5_HOME=/opt/spack-view/
 
 RUN apt-get -yqq update \
     && apt-get -yqq install --no-install-recommends \
