@@ -5,7 +5,7 @@ from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
-SCHEMA_KEYS = ('date','expver','model','number','stream','time','type','levtype','param','step','levelist')
+SCHEMA_KEYS = ('date','expver','model','number','stream','time','type','levtype','param','step','levelist','class')
 
 def _validate_filter(filter_by_values: dict) -> None:
     for k, _ in filter_by_values.items():
