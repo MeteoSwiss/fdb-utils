@@ -65,13 +65,13 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
             for key in el['keys']:
                 if not key in result:
                     result[key] = set()
-                result[key].add(el['keys'][key] if key not in ('number') else int(el['keys'][key]))
+                result[key].add(el['keys'][key] if key != 'number' else int(el['keys'][key]))
         else:
             for key in filter_keys:
                 if not key in result:
                     result[key] = set()
                 if key in el['keys']:
-                    result[key].add(el['keys'][key] if key not in ('number') else int(el['keys'][key]))
+                    result[key].add(el['keys'][key] if key != 'number' else int(el['keys'][key]))
 
     for requested_key in filter_keys:
         if requested_key not in result:
