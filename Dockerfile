@@ -4,8 +4,7 @@ FROM dockerhub.apps.cp.meteoswiss.ch/numericalweatherpredictions/fdb-data-poller
 
 FROM dockerhub.apps.cp.meteoswiss.ch/mch/python-3.11
 
-RUN mkdir -p /opt/spack-root/
-RUN mkdir -p /opt/spack-view/
+RUN mkdir -p /opt/spack-root/ /opt/spack-view/
 
 COPY --from=dependencies /opt/spack-root /opt/spack-root/
 COPY --from=dependencies /opt/spack-view /opt/spack-view/
