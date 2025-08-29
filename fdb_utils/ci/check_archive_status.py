@@ -112,7 +112,6 @@ def get_param_status(
     for member in range(1, num_members):
         pf_filter = {
             **base_filter,
-            "type": "pf",
             "number": str(member),
             **param.field_filter,
         }
