@@ -35,7 +35,7 @@ class Parameter:
 COLLECTIONS: dict[str, Collection] = {
     "icon-ch1-eps": Collection(
         model="icon-ch1-eps",
-        members=11,
+        members=11, # ctrl + 10 members
         steps=33,
         forecasts=8,
         interval=dt.timedelta(hours=3),
@@ -43,7 +43,7 @@ COLLECTIONS: dict[str, Collection] = {
     ),
     "icon-ch2-eps": Collection(
         model="icon-ch2-eps",
-        members=21,
+        members=21, # ctrl + 20 members
         steps=121,
         forecasts=4,
         interval=dt.timedelta(hours=6),
@@ -54,10 +54,10 @@ COLLECTIONS: dict[str, Collection] = {
 
 # The poller archives the hourly rotlatlon grib files for constant params (suffix 'c'), single and multi level params
 # (no suffix), and params on pressure levels (suffix 'p'). Each file contains data for all associated parameters for a
-# single step and ensemble member. For further details on what each file type means, see:
+# single step and ctrl/ensemble member. For further details on what each file type means, see:
 # https://meteoswiss.atlassian.net/wiki/spaces/APN/pages/412975206/ICON-22+PP+Naming+scheme+for+intermediate+products#TC-tasks%2C-prepare-step
 #
-# An error during archival will result in all data for that file missing. Thus we can check that all steps and members
+# An error during archival will result in all data for that file missing. Thus we can check that all steps and ctrl/members
 # are present for a single parameter that exists in the file to determine the status.
 PARAMS: list[Parameter] = [
     Parameter(
@@ -95,22 +95,29 @@ def get_param_status(
     Returns a 2d array with dimensions [member, step] containing 1 if the data is present and a 0 if not.
     """
     num_members = COLLECTIONS[model].members
-    # Constant params are only defined on step 0, all others are defined for all steps.
-    if param.is_constant:
-        num_steps = 1
-    else:
-        num_steps = COLLECTIONS[model].steps
-    filter_values = {"param": param.id, "model": model, "date": date, "time": time}
 
-    status = []
-    for member in range(num_members):
-        param_filter = filter_values
-        param_filter["number"] = str(member)
-        param_filter |= param.field_filter
-        steps_present: set[str | int] = list_all_values(*["step"], **param_filter).get(
-            "step", set()
-        )
-        steps_status = [1 if str(s) in steps_present else 0 for s in range(num_steps)]
+    # Constant params are only defined on step 0, all others are defined for all steps.
+    num_steps = 1 if param.is_constant else COLLECTIONS[model].steps
+
+    base_filter = {"param": param.id, "model": model, "date": date, "time": time}
+
+    status: list[list[int]] = []
+
+    # --- Control member (cf) ---
+    cf_filter = {**base_filter, "type": "cf", **param.field_filter}
+    steps_present = list_all_values("step", **cf_filter).get("step", set())
+    status.append([1 if str(s) in steps_present or s in steps_present else 0 for s in range(num_steps)])
+
+    # --- Perturbed members (pf:1..num_members-1) ---
+    for member in range(1, num_members):
+        pf_filter = {
+            **base_filter,
+            "type": "pf",
+            "number": str(member),
+            **param.field_filter,
+        }
+        steps_present = list_all_values("step", **pf_filter).get("step", set())
+        steps_status = [1 if str(s) in steps_present or s in steps_present else 0 for s in range(num_steps)]
         status.append(steps_status)
 
     return status
@@ -192,14 +199,17 @@ def plot_status(ax: Axes, status: list[list[int]], file_suffix: str) -> None:
     ax.set_anchor("W")
     ax.set_aspect("equal")
     ax.set_title(f"Files _FXINP_lfrf<DDHH>0000_<mmm>{file_suffix}", loc="left")
+
     ax.set_xlabel("step")
     ax.set_xticks(
         [x + 0.5 for x in range(num_steps)], labels=[str(s) for s in range(num_steps)]
     )
+
     ax.set_ylabel("member")
+    member_labels = ["ctrl"] + [str(m) for m in range(1, num_members)]
     ax.set_yticks(
         [x + 0.5 for x in range(num_members)],
-        labels=[str(m) for m in range(num_members)],
+        labels=member_labels,
     )
     ax.pcolormesh(
         status, cmap=cmap, shading="flat", edgecolors="k", linewidths=1, vmin=0, vmax=1
