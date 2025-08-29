@@ -127,7 +127,7 @@ def test_plot_status():
     assert ax.get_xlabel() == "step"
     assert [x.get_text() for x in ax.get_xticklabels()] == ["0", "1", "2"]
     assert ax.get_ylabel() == "member"
-    assert [y.get_text() for y in ax.get_yticklabels()] == ["0", "1", "2", "3"]
+    assert [y.get_text() for y in ax.get_yticklabels()] == ["ctrl", "1", "2", "3"]
 
 
 def test_plot_history():
@@ -146,19 +146,25 @@ def test_plot_history():
 
 
 def return_steps(missing_values: dict[tuple[str], dict[str, list[int]]]):
+    """
+    missing_values maps (param,date,time) -> { "ctrl": [...], "1": [...], "2": [...], ... }
+    Control is addressed via type="cf"; perturbed via number="1..".
+    """
     def list_all_values_mock(*filter_keys: str, **filter_by_values: str):
         model = filter_by_values["model"]
         param = filter_by_values["param"]
         num_steps = 1 if param == "500004" else cas.COLLECTIONS[model].steps
 
-        number = filter_by_values["number"]
         date = filter_by_values["date"]
         time = filter_by_values["time"]
-        missing_steps = missing_values.get((param, date, time), {}).get(number, [])
-        steps = []
-        for s in range(num_steps):
-            if s not in missing_steps:
-                steps.append(str(s))
+
+        if filter_by_values.get("type") == "cf":
+            member_key = "ctrl"
+        else:
+            member_key = filter_by_values.get("number")  # "1","2",...
+
+        missing_steps = missing_values.get((param, date, time), {}).get(member_key, [])
+        steps = {str(s) for s in range(num_steps) if s not in missing_steps}
         return {"step": steps}
 
     return list_all_values_mock
@@ -166,9 +172,10 @@ def return_steps(missing_values: dict[tuple[str], dict[str, list[int]]]):
 
 @patch("fdb_utils.ci.check_archive_status.list_all_values")
 def test_get_archive_status(list_values, tmp_path, data_dir):
+    # Row 0 = control ("ctrl"); rows 1.. = numbers "1.."
     missing_values = {
-        ("500004", "20250202", "0300"): {"0": [0], "1": [0]},
-        ("500006", "20250202", "0300"): {"0": [30, 31], "9": [0, 1]},
+        ("500004", "20250202", "0300"): {"ctrl": [0], "1": [0]},
+        ("500006", "20250202", "0300"): {"ctrl": [30, 31], "9": [0, 1]},
         ("500001", "20250202", "0300"): {"1": [0], "2": [10]},
     }
     list_values.side_effect = return_steps(missing_values)
@@ -196,16 +203,18 @@ def test_get_archive_status(list_values, tmp_path, data_dir):
 
 @patch("fdb_utils.ci.check_archive_status.list_all_values")
 def test_historical_archive_status(list_values, tmp_path, data_dir):
+    # helper to fill all members for ch1 (ctrl + 1..10)
+    def all_members_map(step_list):
+        d = {"ctrl": step_list}
+        d.update({str(n): step_list for n in range(1, 11)})
+        return d
+
     # Set one incomplete forecast and one missing forecast.
     missing_values = {
-        ("500004", "20250202", "0000"): {"0": [0]},
-        ("500004", "20250201", "2100"): {str(n): [0] for n in range(11)},
-        ("500006", "20250201", "2100"): {
-            str(n): [s for s in range(33)] for n in range(11)
-        },
-        ("500001", "20250201", "2100"): {
-            str(n): [s for s in range(33)] for n in range(11)
-        },
+        ("500004", "20250202", "0000"): {"ctrl": [0]},  # latest-1 incomplete
+        ("500004", "20250201", "2100"): all_members_map([0]),  # latest-2 missing
+        ("500006", "20250201", "2100"): all_members_map(list(range(33))),
+        ("500001", "20250201", "2100"): all_members_map(list(range(33))),
     }
     list_values.side_effect = return_steps(missing_values)
 
