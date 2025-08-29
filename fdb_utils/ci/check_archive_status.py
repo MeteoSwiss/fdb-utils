@@ -106,7 +106,7 @@ def get_param_status(
     # --- Control member (cf) ---
     cf_filter = {**base_filter, "type": "cf", **param.field_filter}
     steps_present = list_all_values("step", **cf_filter).get("step", set())
-    status.append([1 if str(s) in steps_present or s in steps_present else 0 for s in range(num_steps)])
+    status.append([1 if str(s) in steps_present else 0 for s in range(num_steps)])
 
     # --- Perturbed members (pf:1..num_members-1) ---
     for member in range(1, num_members):
@@ -116,7 +116,7 @@ def get_param_status(
             **param.field_filter,
         }
         steps_present = list_all_values("step", **pf_filter).get("step", set())
-        steps_status = [1 if str(s) in steps_present or s in steps_present else 0 for s in range(num_steps)]
+        steps_status = [1 if str(s) in steps_present else 0 for s in range(num_steps)]
         status.append(steps_status)
 
     return status
