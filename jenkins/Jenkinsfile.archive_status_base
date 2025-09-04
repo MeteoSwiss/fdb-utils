@@ -34,7 +34,7 @@ pipeline {
         stage('setup python env') {
             steps {
                 sh '''#!/usr/bin/env bash
-                uenv image pull --build ${UENV_VERSION}
+                uenv image pull ${UENV_VERSION}
                 uenv start --view=fdb ${UENV_VERSION}
                 echo "Installing poetry in venv at \$(pwd)/.venv"
                 python3 -m venv .venv
