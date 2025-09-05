@@ -112,11 +112,17 @@ def _set_local_fdb_install_prefix(config: dict):
 
 def _set_fdb_config(config: dict):
 
-
     schema = WORKDIR / 'resource' / 'schema'
     fdb_root = WORKDIR / 'fdb-root'
     config = WORKDIR / 'resource' / 'config-template.yaml'
     new_config = WORKDIR / 'resource' /'config.yaml'
+
+    cmd = ["fdb-info", "--schema"]
+    schema_path_from_env = Path(subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip())
+
+    if schema_path_from_env.exists():
+        print(f"Using schema from environment: {schema_path_from_env}")
+        schema = schema_path_from_env
 
     with open(config, 'r') as f:
         try:
