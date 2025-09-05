@@ -123,6 +123,8 @@ def _set_fdb_config(config: dict):
     if schema_path_from_env.exists():
         print(f"Using schema from environment: {schema_path_from_env}")
         schema = schema_path_from_env
+    else:
+        print(f"Using schema from test resource: {schema}")
 
     with open(config, 'r') as f:
         try:
