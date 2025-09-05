@@ -118,12 +118,11 @@ def _set_fdb_config(config: dict):
     new_config = WORKDIR / 'resource' /'config.yaml'
 
     cmd = ["fdb-info", "--schema"]
-    schema_path_from_env = Path(subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip())
-    print(f"Output from fdb-info --schema: {schema_path_from_env}")
+    schema_path_from_env = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
 
-    if schema_path_from_env.exists():
+    if schema_path_from_env:
         print(f"Using schema from environment: {schema_path_from_env}")
-        schema = schema_path_from_env
+        schema = Path(schema_path_from_env)
     else:
         print(f"Using schema from test resource: {schema}")
 
