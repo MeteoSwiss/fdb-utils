@@ -33,22 +33,26 @@ pipeline {
     stages {
         stage('setup python env') {
             steps {
-                sh '''#!/usr/bin/env bash
+                sh """#!/usr/bin/env bash
                 uenv image pull ${UENV_VERSION}
                 echo "Installing poetry in venv at \$(pwd)/.venv"
                 uenv run --view=fdb ${UENV_VERSION} -- python -m venv .venv
                 uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/pip install poetry==${POETRY_VERSION}
                 uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry env use $(which python)
                 uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry install
-                '''
+                """
             }
         }
 
         stage('test') {
             steps {
-                sh '''#!/usr/bin/env bash
-                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry run pytest
-                '''
+                script{
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                        sh """#!/usr/bin/env bash
+                        uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry run pytest
+                        """
+                    }
+                }
             }
         }
 
