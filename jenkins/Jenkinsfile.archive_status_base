@@ -35,12 +35,11 @@ pipeline {
             steps {
                 sh '''#!/usr/bin/env bash
                 uenv image pull ${UENV_VERSION}
-                uenv start --view=fdb ${UENV_VERSION}
                 echo "Installing poetry in venv at \$(pwd)/.venv"
-                python3 -m venv .venv
-                .venv/bin/pip install poetry==${POETRY_VERSION}
-                .venv/bin/poetry env use $(which python)
-                .venv/bin/poetry install
+                uenv run --view=fdb ${UENV_VERSION} -- python -m venv .venv
+                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/pip install poetry==${POETRY_VERSION}
+                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry env use $(which python)
+                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry install
                 '''
             }
         }
@@ -48,8 +47,7 @@ pipeline {
         stage('test') {
             steps {
                 sh '''#!/usr/bin/env bash
-                uenv start --view=fdb ${UENV_VERSION}
-                .venv/bin/poetry run pytest
+                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry run pytest
                 '''
             }
         }
@@ -59,8 +57,7 @@ pipeline {
                 script {
                     try {
                         sh '''#!/usr/bin/env bash
-                        uenv start --view=fdb ${UENV_VERSION}
-                        .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
+                        uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
                         '''
                     } finally {
                         archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true
