@@ -119,6 +119,7 @@ def _set_fdb_config(config: dict):
 
     cmd = ["fdb-info", "--schema"]
     schema_path_from_env = Path(subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip())
+    print(f"Output from fdb-info --schema: {schema_path_from_env}")
 
     if schema_path_from_env.exists():
         print(f"Using schema from environment: {schema_path_from_env}")
