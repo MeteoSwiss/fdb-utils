@@ -117,8 +117,13 @@ def _set_fdb_config(config: dict):
     config = WORKDIR / 'resource' / 'config-template.yaml'
     new_config = WORKDIR / 'resource' /'config.yaml'
 
+    # Ensure that we do not find the default schema from FDB5_HOME or FDB_HOME
+    env = os.environ.copy()
+    env["FDB5_HOME"] = "null"
+    env["FDB_HOME"] = "null"
+
     cmd = ["fdb-info", "--schema"]
-    schema_path_from_env = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+    schema_path_from_env = subprocess.run(cmd, check=True, capture_output=True, text=True, env=env).stdout.strip()
 
     if schema_path_from_env:
         print(f"Using schema from environment: {schema_path_from_env}")
