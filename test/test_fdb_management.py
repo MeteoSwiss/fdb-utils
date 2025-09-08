@@ -129,7 +129,7 @@ def extract_metadata(path: Path) -> dict:
 
             step = eccodes.codes_get_string(gid, "mars.step")
             if step is not None:
-                record_metadata["step"] = int(step)
+                record_metadata["step"] = step
 
             levtype = eccodes.codes_get_string(gid, "mars.levtype")
             if levtype is not None:
