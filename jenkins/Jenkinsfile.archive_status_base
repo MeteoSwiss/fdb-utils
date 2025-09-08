@@ -26,7 +26,6 @@ pipeline {
 
     environment {
         UENV_VERSION = "fdb/5.17:v2"
-        FDB5_CONFIG_FILE = '/scratch/mch/trajond/fdb-realtime-lcm/realtime_config.yaml'
         POETRY_VERSION = '1.8.1'
     }
 
