@@ -100,7 +100,7 @@ def test_fdb_definitions(tmp_path: Path, data_dir: Path, fdb):
     keys_in_fdb = [item["keys"] for item in fdb.list(request, True, True)]
 
     reduced_keys_in_fdb = [
-        {key: item[key] for key in archived_metadata[0].keys()} for item in keys_in_fdb
+        {key: item.get(key) for key in archived_metadata[0].keys()} for item in keys_in_fdb
     ]
 
     print("Keys returned from FDB list")
@@ -120,28 +120,19 @@ def extract_metadata(path: Path) -> dict:
 
             record_metadata = {}
             fcst_date = eccodes.codes_get_string(gid, "mars.date")
-            if fcst_date is not None:
-                record_metadata["date"] = fcst_date
-
             fcst_time = eccodes.codes_get_string(gid, "mars.time")
-            if fcst_time is not None:
-                record_metadata["time"] = fcst_time
-
             step = eccodes.codes_get_string(gid, "mars.step")
-            if step is not None:
-                record_metadata["step"] = step
-
             levtype = eccodes.codes_get_string(gid, "mars.levtype")
-            if levtype is not None:
-                record_metadata["levtype"] = levtype
-
             type = eccodes.codes_get_string(gid, "mars.type")
             if type == "pf":
                 number = eccodes.codes_get_string(gid, "mars.number")
             elif type == "cf":
                 number = None
-            if number is not None:
-                record_metadata["number"] = int(number)
+            record_metadata["number"] = number
+            record_metadata["levtype"] = levtype
+            record_metadata["step"] = step
+            record_metadata["time"] = fcst_time
+            record_metadata["date"] = fcst_date
 
             file_metadata.append(record_metadata)
 
