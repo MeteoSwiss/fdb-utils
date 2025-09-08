@@ -117,19 +117,31 @@ def extract_metadata(path: Path) -> dict:
 
     with open(path, "rb") as f:
         while (gid := eccodes.codes_grib_new_from_file(f)) is not None:
-            fcst_date = eccodes.codes_get_string(gid, "mars.date")
-            fcst_time = eccodes.codes_get_string(gid, "mars.time")
-            step = eccodes.codes_get_string(gid, "mars.step")
-            number = eccodes.codes_get_string(gid, "mars.number")
-            levtype = eccodes.codes_get_string(gid, "mars.levtype")
 
-            record_metadata = {
-                "date": fcst_date,
-                "time": fcst_time,
-                "step": step,
-                "number": number,
-                "levtype": levtype,
-            }
+            record_metadata = {}
+            fcst_date = eccodes.codes_get_string(gid, "mars.date")
+            if fcst_date is not None:
+                record_metadata["date"] = fcst_date
+
+            fcst_time = eccodes.codes_get_string(gid, "mars.time")
+            if fcst_time is not None:
+                record_metadata["time"] = fcst_time
+
+            step = eccodes.codes_get_string(gid, "mars.step")
+            if step is not None:
+                record_metadata["step"] = int(step)
+
+            levtype = eccodes.codes_get_string(gid, "mars.levtype")
+            if levtype is not None:
+                record_metadata["levtype"] = levtype
+
+            type = eccodes.codes_get_string(gid, "mars.type")
+            if type == "pf":
+                number = eccodes.codes_get_string(gid, "mars.number")
+            elif type == "cf":
+                number = None
+            if number is not None:
+                record_metadata["number"] = int(number)
 
             file_metadata.append(record_metadata)
 
