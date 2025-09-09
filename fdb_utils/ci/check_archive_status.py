@@ -52,13 +52,14 @@ COLLECTIONS: dict[str, Collection] = {
 }
 
 
-# The poller archives the hourly rotlatlon grib files for constant params (suffix 'c'), single and multi level params
+# The poller archives the hourly rotated latlon grib files for constant params (suffix 'c'), single and multi level params
 # (no suffix), and params on pressure levels (suffix 'p'). Each file contains data for all associated parameters for a
 # single step and ctrl/ensemble member. For further details on what each file type means, see:
 # https://meteoswiss.atlassian.net/wiki/spaces/APN/pages/412975206/ICON-22+PP+Naming+scheme+for+intermediate+products#TC-tasks%2C-prepare-step
 #
-# An error during archival will result in all data for that file missing. Thus we can check that all steps and ctrl/members
-# are present for a single parameter that exists in the file to determine the status.
+# An error during archival will result in all data for that file missing in FDB.
+# Thus we can check that all steps and ctrl/members are present for a 
+# single parameter that exists in the file to determine the status.
 PARAMS: list[Parameter] = [
     Parameter(
         id="500004", file_suffix="c", is_constant=True, field_filter={"levtype": "sfc"}
