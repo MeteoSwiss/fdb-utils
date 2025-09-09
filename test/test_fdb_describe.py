@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 
 from fdb_utils.user.describe import list_all_values, get_archived_forecasts
-from test.test_fdb_management import _generate_file_to_upload, _modify_grib_file
+from test.utils import _generate_file_to_upload, _modify_grib_file
 from test.conftest import fdb
 
 def test_list_all_values(tmp_path, data_dir, fdb):
