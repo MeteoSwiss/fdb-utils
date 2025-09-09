@@ -23,7 +23,7 @@ def pytest_configure(config):
 
     _set_local_eccodes_install_prefix(config)
     _set_local_fdb_install_prefix(config)
-    _set_fdb_config(config)
+    _set_fdb_config()
 
     fdb_info()
 
@@ -129,18 +129,18 @@ def _set_local_fdb_install_prefix(config: dict):
             os.environ["PATH"] = str(bin) + ':' + os.environ["PATH"] 
 
 
-def _set_fdb_config(config: dict):
+def _set_fdb_config():
 
     schema = WORKDIR / 'resource' / 'schema'
     fdb_root = WORKDIR / 'fdb-root'
-    config = WORKDIR / 'resource' / 'config-template.yaml'
+    config_template = WORKDIR / 'resource' / 'config-template.yaml'
     new_config = WORKDIR / 'resource' /'config.yaml'
 
     if env_config := os.getenv("FDB5_CONFIG_FILE"):
         print(f"FDB5_CONFIG_FILE already set: {env_config}")
-        config = env_config
+        config_template = env_config
 
-    with open(config, 'r') as f:
+    with open(config_template, 'r') as f:
         try:
             loaded = yaml.safe_load(f)
         except yaml.YAMLError as exc:
