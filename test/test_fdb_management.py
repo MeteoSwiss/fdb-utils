@@ -97,10 +97,10 @@ def test_fdb_definitions(tmp_path: Path, data_dir: Path, fdb):
         "time": "0900",
     }
 
-    keys_in_fdb = [item["keys"] for item in fdb.list(request, True, True)]
+    keys_in_fdb: list[dict] = [item["keys"] for item in fdb.list(request, True, True)]
 
     reduced_keys_in_fdb = [
-        {key: item.get(key) for key in archived_metadata[0].keys()} for item in keys_in_fdb
+        {key: item.get(key, None) for key in archived_metadata[0].keys()} for item in keys_in_fdb
     ]
 
     print("Keys returned from FDB list")
