@@ -111,7 +111,7 @@ def test_fdb_definitions(tmp_path: Path, data_dir: Path, fdb):
         assert expected in reduced_keys_in_fdb
 
 
-def _extract_metadata(path: Path) -> dict:
+def _extract_metadata(path: Path) -> list[dict]:
 
     file_metadata = []
 
