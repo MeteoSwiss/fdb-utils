@@ -123,11 +123,14 @@ def extract_metadata(path: Path) -> dict:
             fcst_time = eccodes.codes_get_string(gid, "mars.time")
             step = eccodes.codes_get_string(gid, "mars.step")
             levtype = eccodes.codes_get_string(gid, "mars.levtype")
-            type = eccodes.codes_get_string(gid, "mars.type")
-            if type == "pf":
+            mars_type = eccodes.codes_get_string(gid, "mars.type")
+            if mars_type == "pf":
                 number = eccodes.codes_get_string(gid, "mars.number")
-            elif type == "cf":
+            elif mars_type == "cf":
                 number = None
+            else:
+                number = None
+                print(f"WARNING: unexpected type: {mars_type}")
             record_metadata["number"] = number
             record_metadata["levtype"] = levtype
             record_metadata["step"] = step
