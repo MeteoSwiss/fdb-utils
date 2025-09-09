@@ -91,6 +91,7 @@ def eccodes_definitions(mars_definitions, cosmo_definitions):
     definitions = f"{cosmo_definitions}:{mars_definitions}:{vendor}"
     eccodes.codes_set_definitions_path(definitions)
     os.environ["GRIB_DEFINITION_PATH"] = definitions
+    print(f"GRIB_DEFINITION_PATH: {os.environ['GRIB_DEFINITION_PATH']}")
 
 def _set_local_eccodes_install_prefix(config: dict):
     try:
