@@ -102,6 +102,6 @@ method:     Integer;
 # These rules must be first, otherwise fields of These
 # classes will be index with the default rule for oper #expver?, model?, type?
 
-[ date, time, stream, class, expver, model, type, number
-    [ levtype
+[ date, time, stream, class, expver, model, type
+    [ levtype, number?
         [ param, step, levelist? ]]]
