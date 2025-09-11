@@ -25,11 +25,7 @@ pipeline {
     }
 
     environment {
-        FDB5_CONFIG_FILE = '/scratch/mch/trajond/fdb-realtime-lcm/realtime_config.yaml'
-        FDB5_HOME = '/scratch/mch/trajond/spack-view'
-        ECCODES_HOME = '/scratch/mch/trajond/spack-view'
-        GRIB_DEFINITION_PATH = '/scratch/mch/trajond/eccodes-cosmo-resources/definitions:/scratch/mch/trajond/eccodes/definitions'
-        VENV_DIR = '$(pwd)/.venv'
+        UENV_VERSION = "fdb/5.17:v2"
         POETRY_VERSION = '1.8.1'
     }
 
@@ -37,21 +33,25 @@ pipeline {
         stage('setup python env') {
             steps {
                 sh '''#!/usr/bin/env bash
-                module use /mch-environment/v8/modules/
-                module load python/3.11.7
+                uenv image pull ${UENV_VERSION}
                 echo "Installing poetry in venv at \$(pwd)/.venv"
-                python3 -m venv .venv
-                .venv/bin/pip install poetry==${POETRY_VERSION}
-                .venv/bin/poetry install
+                uenv run --view=fdb ${UENV_VERSION} -- python -m venv .venv
+                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/pip install poetry==${POETRY_VERSION}
+                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry env use $(which python)
+                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry install
                 '''
             }
         }
 
         stage('test') {
             steps {
-                sh '''#!/usr/bin/env bash
-                .venv/bin/poetry run pytest
-                '''
+                script{
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                        sh '''#!/usr/bin/env bash
+                        uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry run pytest
+                        '''
+                    }
+                }
             }
         }
 
@@ -60,7 +60,7 @@ pipeline {
                 script {
                     try {
                         sh '''#!/usr/bin/env bash
-                        .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
+                        uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
                         '''
                     } finally {
                         archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true

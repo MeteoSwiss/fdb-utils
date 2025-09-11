@@ -37,7 +37,7 @@ def fdb_info() -> None:
     """Print information on FDB environment using `fdb-info --all`."""
 
     output = subprocess.run([
-        f"{os.getenv('FDB5_HOME', 'unset')}/bin/fdb-info",
+        "fdb-info",
         '--all'
         ], stdout=subprocess.PIPE, check=False)
 

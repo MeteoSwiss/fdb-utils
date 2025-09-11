@@ -1,10 +1,12 @@
 import logging
 import os
 from pathlib import Path
-import subprocess
+import requests
 import shutil
 import os
 import gc
+import tarfile
+import io
 
 import yaml
 import pytest
@@ -19,10 +21,9 @@ def pytest_configure(config):
     # The below functions are required for setting up local tests only.
     config = dotenv_values()
 
-    _set_grib_definitions_path()
     _set_local_eccodes_install_prefix(config)
     _set_local_fdb_install_prefix(config)
-    _set_fdb_config(config)
+    _set_fdb_config()
 
     fdb_info()
 
@@ -41,38 +42,56 @@ def test_dir() -> Path:
 
     return pwd
 
+def _truncate_path(name: str, cutoff: str) -> str:
+    parts = Path(name).parts
+    i = parts.index(cutoff) + 1
+    return str(Path(*parts[i:]))
 
-def _set_grib_definitions_path():
+@pytest.fixture(scope="session")
+def cosmo_definitions(tmp_path_factory) -> Path:
+    path = tmp_path_factory.mktemp("cosmo") / "definitions"
+    tag = "2.38.3-1"
+    name = f"eccodes_definitions.edzw-{tag}.tar.bz2"
+    url = f"https://opendata.dwd.de/weather/lib/grib/{name}"
+    response = requests.get(url)
+    response.raise_for_status()
+    with tarfile.open(name, "r:bz2", io.BytesIO(response.content)) as tar:
+        members = [
+            member.replace(name=_truncate_path(member.name, f"definitions.edzw-{tag}"))
+            for member in tar.getmembers()
+            if "definitions" in member.name
+        ]
+        tar.extractall(path, members=members, filter="data")
 
-    if 'GRIB_DEFINITION_PATH' not in os.environ:
+    return path
 
-        definitions_dir = WORKDIR / 'resource'
 
-        if not os.path.exists(definitions_dir / 'eccodes') and not os.path.exists(definitions_dir / 'eccodes-cosmo-resources'):
+@pytest.fixture(scope="session")
+def mars_definitions(tmp_path_factory) -> Path:
+    path = tmp_path_factory.mktemp("mars") / "definitions"
+    name = "v0.0.2.tar.gz"
+    url = f"https://github.com/MeteoSwiss/eccodes-cosmo-mars/archive/refs/tags/{name}"
+    response = requests.get(url)
+    response.raise_for_status()
+    with tarfile.open(name, "r:gz", io.BytesIO(response.content)) as tar:
+        members = [
+            member.replace(name=_truncate_path(member.name, "definitions"))
+            for member in tar.getmembers()
+            if "definitions" in member.name
+        ]
+        tar.extractall(path, members=members, filter="data")
 
-            eccodes_dir = f"{WORKDIR / 'eccodes'}"
-            eccodes_cosmo_dir = f"{WORKDIR / 'eccodes-cosmo-resources'}"
-            
-            if os.path.exists(eccodes_dir) and os.path.isdir(eccodes_dir):
-                shutil.rmtree(eccodes_dir)
-            if os.path.exists(eccodes_cosmo_dir) and os.path.isdir(eccodes_cosmo_dir):
-                shutil.rmtree(eccodes_cosmo_dir)
+    return path
 
-            subprocess.run(["git", "clone", "--depth", "1", "-b", "2.35.0",
-                            "https://github.com/ecmwf/eccodes.git", f"{eccodes_dir}"])
-            subprocess.run(["git", "clone", "--depth", "1", "-b", "v2.35.0.1dm1",
-                            "https://github.com/COSMO-ORG/eccodes-cosmo-resources.git", f"{eccodes_cosmo_dir}"])
-            
-            for i in ('eccodes-cosmo-resources', 'eccodes'):
-                # Keep only definitions folder from eccodes/eccodes-cosmo-resources
-                definitions_src = WORKDIR / i 
-                definitions_dest = definitions_dir / i / 'definitions'
-                shutil.copytree(definitions_src / 'definitions', definitions_dest)
-                shutil.rmtree(definitions_src)
 
-        os.environ["GRIB_DEFINITION_PATH"] = f"{definitions_dir / 'eccodes-cosmo-resources' / 'definitions' }:{definitions_dir / 'eccodes' / 'definitions'}"
-
-    print("GRIB_DEFINITION_PATH: %s" % os.getenv("GRIB_DEFINITION_PATH", 'unset'))
+@pytest.fixture(scope="session", autouse=True)
+def eccodes_definitions(mars_definitions, cosmo_definitions):
+    import eccodes
+    vendor = eccodes.codes_definition_path()
+    definitions = f"{cosmo_definitions}:{mars_definitions}:{vendor}"
+    eccodes.codes_set_definitions_path(definitions)
+    os.environ["GRIB_DEFINITION_PATH"] = definitions
+    print(f"GRIB_DEFINITION_PATH: {os.environ['GRIB_DEFINITION_PATH']}")
 
 def _set_local_eccodes_install_prefix(config: dict):
     try:
@@ -110,21 +129,26 @@ def _set_local_fdb_install_prefix(config: dict):
             os.environ["PATH"] = str(bin) + ':' + os.environ["PATH"] 
 
 
-def _set_fdb_config(config: dict):
-
+def _set_fdb_config():
 
     schema = WORKDIR / 'resource' / 'schema'
     fdb_root = WORKDIR / 'fdb-root'
-    config = WORKDIR / 'resource' / 'config-template.yaml'
+    config_template = WORKDIR / 'resource' / 'config-template.yaml'
     new_config = WORKDIR / 'resource' /'config.yaml'
 
-    with open(config, 'r') as f:
+    if env_config := os.getenv("FDB5_CONFIG_FILE"):
+        print(f"FDB5_CONFIG_FILE already set: {env_config}")
+        config_template = env_config
+
+    with open(config_template, 'r') as f:
         try:
             loaded = yaml.safe_load(f)
         except yaml.YAMLError as exc:
             print(exc)
 
-    loaded['schema']=str(schema)
+    if not env_config:
+        loaded['schema']=str(schema)
+
     loaded['spaces'][0]['roots'][0]['path']=str(fdb_root)
 
     with open(new_config, 'w') as stream:

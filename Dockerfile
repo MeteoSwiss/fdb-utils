@@ -11,6 +11,7 @@ COPY --from=dependencies /opt/spack-view /opt/spack-view/
 
 ENV ECCODES_DIR=/opt/spack-view/
 ENV FDB5_HOME=/opt/spack-view/
+ENV PATH="/opt/spack-view/bin:${PATH}"
 
 RUN apt-get -yqq update \
     && apt-get -yqq install --no-install-recommends \
