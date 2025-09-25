@@ -25,7 +25,7 @@ pipeline {
     }
 
     environment {
-        UENV_VERSION = "fdb/5.17:v2"
+        UENV_VERSION = "fdb/5.17:v4"
         POETRY_VERSION = '1.8.1'
     }
 
@@ -35,10 +35,10 @@ pipeline {
                 sh '''#!/usr/bin/env bash
                 uenv image pull ${UENV_VERSION}
                 echo "Installing poetry in venv at \$(pwd)/.venv"
-                uenv run --view=fdb ${UENV_VERSION} -- python -m venv .venv
-                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/pip install poetry==${POETRY_VERSION}
-                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry env use $(which python)
-                uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry install
+                uenv run --view=realtime ${UENV_VERSION} -- python -m venv .venv
+                uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/pip install poetry==${POETRY_VERSION}
+                uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/poetry env use $(which python)
+                uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/poetry install
                 '''
             }
         }
@@ -48,7 +48,7 @@ pipeline {
                 script{
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                         sh '''#!/usr/bin/env bash
-                        uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry run pytest
+                        uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/poetry run pytest
                         '''
                     }
                 }
@@ -60,7 +60,7 @@ pipeline {
                 script {
                     try {
                         sh '''#!/usr/bin/env bash
-                        uenv run --view=fdb ${UENV_VERSION} -- .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
+                        uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
                         '''
                     } finally {
                         archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true
