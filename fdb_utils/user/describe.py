@@ -66,20 +66,24 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
                 value = el['keys'].get(key)
                 if not key in result:
                     result[key] = set()
-                if key != 'number':
+                if key not in ('number', 'levelist'):
                     result[key].add(value)
                 elif key == 'number' and value:
                     result[key].add(int(value))
+                elif key == 'levelist' and value:
+                    result[key].add(float(value))
         else:
             for key in filter_keys:
                 if not key in result:
                     result[key] = set()
                 if key in el['keys']:
                     value = el['keys'].get(key)
-                    if key != 'number':
+                    if key not in ('number', 'levelist'):
                         result[key].add(value)
                     elif key == 'number' and value:
                         result[key].add(int(value))
+                    elif key == 'levelist' and value:
+                        result[key].add(float(value))
 
     for requested_key in filter_keys:
         if requested_key not in result:
@@ -89,6 +93,8 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
         print('No metadata found matching your request.')
 
     for key, value in result.items():
+        if key == 'levelist' and value:
+            value = sorted(value, key=float)
         if value:
             print(f'{key}: {value}')
 
