@@ -63,15 +63,23 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     for el in pyfdb.list(request, True, True):
         if not filter_keys:
             for key in el['keys']:
+                value = el['keys'].get(key)
                 if not key in result:
                     result[key] = set()
-                result[key].add(el['keys'][key] if key != 'number' else int(el['keys'][key]))
+                if key != 'number':
+                    result[key].add(value)
+                elif key == 'number' and value:
+                    result[key].add(int(value))
         else:
             for key in filter_keys:
                 if not key in result:
                     result[key] = set()
                 if key in el['keys']:
-                    result[key].add(el['keys'][key] if key != 'number' else int(el['keys'][key]))
+                    value = el['keys'].get(key)
+                    if key != 'number':
+                        result[key].add(value)
+                    elif key == 'number' and value:
+                        result[key].add(int(value))
 
     for requested_key in filter_keys:
         if requested_key not in result:
