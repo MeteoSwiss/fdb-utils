@@ -116,15 +116,19 @@ def _set_local_fdb_install_prefix(config: dict):
     except RuntimeError as e:
         if 'FDB5_HOME' in config:
             os.environ['FDB5_HOME'] = config['FDB5_HOME']
-
-        lib =  Path(os.getenv("FDB5_HOME", '/unset'))/ 'lib' / 'libfdb5.so'
-        lib64 = Path(os.getenv("FDB5_HOME", '/unset')) / 'lib64' / 'libfdb5.so'
-        bin = Path(os.getenv("FDB5_HOME", '/unset'))/ 'bin'
+        else:
+            raise pytest.UsageError("Missing FDB5_HOME environment variable. Set FDB5_HOME in test/.env for local testing.")
+        
+        lib =  Path(config['FDB5_HOME']) / 'lib' / 'libfdb5.so'
+        lib64 = Path(config['FDB5_HOME']) / 'lib64' / 'libfdb5.so'
+        bin = Path(config['FDB5_HOME']) / 'bin'
+        
         if lib.exists() or lib64.exists():
             print("FDB5_HOME: %s" % os.getenv("FDB5_HOME", 'unset'))
         else:
-            logging.error("Set FDB5_HOME in test/.env for local testing.")
-            raise e
+            raise pytest.UsageError("Invalid FDB5_HOME path (%s): missing libfdb5.so" % config['FDB5_HOME'])
+
+
         if bin.exists():
             os.environ["PATH"] = str(bin) + ':' + os.environ["PATH"] 
 
