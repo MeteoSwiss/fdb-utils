@@ -113,7 +113,7 @@ def _set_local_eccodes_install_prefix(config: dict):
 def _set_local_fdb_install_prefix(config: dict):
     try:
         import pyfdb
-    except RuntimeError as e:
+    except RuntimeError:
         if 'FDB5_HOME' in config:
             os.environ['FDB5_HOME'] = config['FDB5_HOME']
         else:
@@ -121,7 +121,7 @@ def _set_local_fdb_install_prefix(config: dict):
         
         lib =  Path(config['FDB5_HOME']) / 'lib' / 'libfdb5.so'
         lib64 = Path(config['FDB5_HOME']) / 'lib64' / 'libfdb5.so'
-        bin = Path(config['FDB5_HOME']) / 'bin'
+        binary = Path(config['FDB5_HOME']) / 'bin'
         
         if lib.exists() or lib64.exists():
             print("FDB5_HOME: %s" % os.getenv("FDB5_HOME", 'unset'))
@@ -130,7 +130,7 @@ def _set_local_fdb_install_prefix(config: dict):
 
 
         if bin.exists():
-            os.environ["PATH"] = str(bin) + ':' + os.environ["PATH"] 
+            os.environ["PATH"] = str(binary) + ':' + os.environ["PATH"] 
 
 
 def _set_fdb_config():
