@@ -106,7 +106,7 @@ def _set_local_eccodes_install_prefix(config: dict):
         if lib.exists() or lib64.exists():
             print("ECCODES_DIR: %s" % os.getenv("ECCODES_DIR", 'unset'))
         else:
-            logging.error("Set ECCODES_DIR in fdb-data-poller/test/.env for local testing.")
+            logging.error("Set ECCODES_DIR in test/.env for local testing.")
             raise e
         
 
