@@ -123,7 +123,7 @@ def _set_local_fdb_install_prefix(config: dict):
         if lib.exists() or lib64.exists():
             print("FDB5_HOME: %s" % os.getenv("FDB5_HOME", 'unset'))
         else:
-            logging.error("Set FDB5_HOME in fdb-data-poller/test/.env for local testing.")
+            logging.error("Set FDB5_HOME in test/.env for local testing.")
             raise e
         if bin.exists():
             os.environ["PATH"] = str(bin) + ':' + os.environ["PATH"] 
