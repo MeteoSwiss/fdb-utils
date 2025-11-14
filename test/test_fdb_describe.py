@@ -29,6 +29,32 @@ def test_list_all_values(tmp_path, data_dir, fdb):
     assert list_all_values('step')['step'] == {'0','1','2','3'}
     assert list_all_values('step', date='20240202')['step'] == {'0','1'}
     assert list_all_values('number', date='20240202')['number'] == {5}
+    assert list_all_values(date='20240203')['step'] == {'2','3'}
+    assert list_all_values(date='20240203')['number'] == {1,2}
+
+def test_listall_values_filtered(tmp_path, data_dir, fdb):
+
+    # Generate GRIB files with different dates and archive to FDB
+    file_to_upload_1, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+    file_to_upload_2, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+    file_to_upload_3, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+    file_to_upload_4, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+
+    _modify_grib_file(file_to_upload_1, date='20240202', time='300', number=5, step=0)
+    _modify_grib_file(file_to_upload_2, date='20240202', time='300', number=5, step=1)
+    _modify_grib_file(file_to_upload_3, date='20240203', time='300', number=1, step=2)
+    _modify_grib_file(file_to_upload_4, date='20240203', time='600', number=2, step=3)
+
+    for file in (file_to_upload_1, file_to_upload_2, file_to_upload_3, file_to_upload_4):
+        with open(file, "rb") as f:
+            fdb.archive(f.read())
+
+    fdb.flush()
+
+    assert list_all_values('time')['time'] == {'0300', '0600'}
+    assert list_all_values('step')['step'] == {'0','1','2','3'}
+    assert list_all_values('step', date='20240202')['step'] == {'0','1'}
+    assert list_all_values('number', date='20240202')['number'] == {5}
 
 
 def test_get_archived_forecasts(data_dir, tmp_path, fdb):
@@ -63,20 +89,19 @@ def test_get_archived_forecasts(data_dir, tmp_path, fdb):
     assert result == [datetime(2024, 2, 2, 3), datetime(2024, 2, 2, 6), datetime(2024, 3, 2, 9)]
 
 
-# def test_validate_filter_error(tmp_path, data_dir, fdb):
+def test_validate_filter_error(tmp_path, data_dir, fdb):
 
-#     file_to_upload_1, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+    file_to_upload_1, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
 
-#     _modify_grib_file(file_to_upload_1, date='20240202', time='300')
+    _modify_grib_file(file_to_upload_1, date='20240202', time='300')
 
-#     with open(file_to_upload_1, "rb") as f:
-#         fdb.archive(f.read())
+    with open(file_to_upload_1, "rb") as f:
+        fdb.archive(f.read())
 
-#     fdb.flush()
+    fdb.flush()
 
-#     with pytest.raises(RuntimeError, match=f"Key leveltype must be one of '{', '.join(SCHEMA_KEYS)}'"):
-#         get_archived_forecasts( {'leveltype': 'sfc'} )
-
+    with pytest.raises(RuntimeError, match=f"Key datetime must be one of '{', '.join(SCHEMA_KEYS)}'"):
+        list_all_values(datetime='202402020300')
 
 def test_get_archived_forecast_empty_request(tmp_path, data_dir, fdb):
 
@@ -97,16 +122,15 @@ def test_get_archived_forecast_empty_request(tmp_path, data_dir, fdb):
 
     assert result == [datetime(2024, 2, 2, 3, 0)]
 
-
 # def test_list_all_values_levelist_sorting(tmp_path, data_dir, fdb):
 
 #     file_to_upload_1, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
 
-#     _modify_grib_file(file_to_upload_1, date='20240203', time='600', level=2, step=3)
+#     _modify_grib_file(file_to_upload_1, date='20240203', time='600', levelist=float(2), step=3)
 
 #     with open(file_to_upload_1, "rb") as f:
 #         fdb.archive(f.read())
 
 #     fdb.flush()
 
-#     assert list_all_values('level', date='20240203')['level'] == {2}
+#     assert list_all_values(date='20240203')['time'] == {'0600'}
