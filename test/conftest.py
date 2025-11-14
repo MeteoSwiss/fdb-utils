@@ -14,10 +14,10 @@ from dotenv import dotenv_values
 
 from fdb_utils.env import fdb_info
 
-WORKDIR: Path = Path(os.path.dirname(os.path.realpath(__file__))) 
+WORKDIR: Path = Path(os.path.dirname(os.path.realpath(__file__)))
 
 def pytest_configure(config):
-        
+
     # The below functions are required for setting up local tests only.
     config = dotenv_values()
 
@@ -108,7 +108,7 @@ def _set_local_eccodes_install_prefix(config: dict):
         else:
             logging.error("Set ECCODES_DIR in test/.env for local testing.")
             raise e
-        
+
 
 def _set_local_fdb_install_prefix(config: dict):
     try:
@@ -118,19 +118,19 @@ def _set_local_fdb_install_prefix(config: dict):
             os.environ['FDB5_HOME'] = config['FDB5_HOME']
         else:
             raise pytest.UsageError("Missing FDB5_HOME environment variable. Set FDB5_HOME in test/.env for local testing.")
-        
+
         lib =  Path(config['FDB5_HOME']) / 'lib' / 'libfdb5.so'
         lib64 = Path(config['FDB5_HOME']) / 'lib64' / 'libfdb5.so'
         binary = Path(config['FDB5_HOME']) / 'bin'
-        
+
         if lib.exists() or lib64.exists():
             print("FDB5_HOME: %s" % os.getenv("FDB5_HOME", 'unset'))
         else:
             raise pytest.UsageError("Invalid FDB5_HOME path (%s): missing libfdb5.so" % config['FDB5_HOME'])
 
 
-        if bin.exists():
-            os.environ["PATH"] = str(binary) + ':' + os.environ["PATH"] 
+        if binary.exists():
+            os.environ["PATH"] = str(binary) + ':' + os.environ["PATH"]
 
 
 def _set_fdb_config():
@@ -182,13 +182,13 @@ def fdb(request, test_dir):
     def teardown():
         try:
             del fdb
-        except: 
+        except:
             pass
         gc.collect()
 
         print('Deleting fdb')
         shutil.rmtree(fdb_root)
 
-    request.addfinalizer(teardown) 
+    request.addfinalizer(teardown)
 
     yield fdb
