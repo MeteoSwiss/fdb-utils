@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from fdb_utils.user.describe import list_all_values, get_archived_forecasts
+from fdb_utils.user.describe import list_all_values, get_archived_forecasts,SCHEMA_KEYS
 from test.utils import _generate_file_to_upload, _modify_grib_file
 from test.conftest import fdb
 
@@ -61,3 +61,52 @@ def test_get_archived_forecasts(data_dir, tmp_path, fdb):
     result = get_archived_forecasts( {'levtype': 'sfc'} )
 
     assert result == [datetime(2024, 2, 2, 3), datetime(2024, 2, 2, 6), datetime(2024, 3, 2, 9)]
+
+
+# def test_validate_filter_error(tmp_path, data_dir, fdb):
+
+#     file_to_upload_1, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+
+#     _modify_grib_file(file_to_upload_1, date='20240202', time='300')
+
+#     with open(file_to_upload_1, "rb") as f:
+#         fdb.archive(f.read())
+
+#     fdb.flush()
+
+#     with pytest.raises(RuntimeError, match=f"Key leveltype must be one of '{', '.join(SCHEMA_KEYS)}'"):
+#         get_archived_forecasts( {'leveltype': 'sfc'} )
+
+
+def test_get_archived_forecast_empty_request(tmp_path, data_dir, fdb):
+
+    file_to_upload_1, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+    file_to_upload_2, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+
+    _modify_grib_file(file_to_upload_1, date='20240202', time='300',step=0, number=1, levtype='sfc')
+    _modify_grib_file(file_to_upload_2, date='20240203', time='300',step=1, number=0, levtype='sfc')
+
+    for file in (file_to_upload_1, file_to_upload_2):
+        with open(file, "rb") as f:
+            fdb.archive(f.read())
+
+    fdb.flush()
+
+    result = get_archived_forecasts()
+    print(result)
+
+    assert result == [datetime(2024, 2, 2, 3, 0)]
+
+
+# def test_list_all_values_levelist_sorting(tmp_path, data_dir, fdb):
+
+#     file_to_upload_1, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+
+#     _modify_grib_file(file_to_upload_1, date='20240203', time='600', level=2, step=3)
+
+#     with open(file_to_upload_1, "rb") as f:
+#         fdb.archive(f.read())
+
+#     fdb.flush()
+
+#     assert list_all_values('level', date='20240203')['level'] == {2}

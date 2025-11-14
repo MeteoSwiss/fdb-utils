@@ -41,7 +41,8 @@ def _build_modification_string(
     time: str | None = None,
     step: int | str | None = None,
     number: int | None = None,
-    levtype: str | None = None) -> str:
+    levtype: str | None = None,
+    level: float | None = None) -> str:
     modification = []
 
     if date is not None:
@@ -54,6 +55,8 @@ def _build_modification_string(
         modification.append(f"number={number}")
     if levtype is not None:
         modification.append(f"typeOfLevel={LEVEL_TYPE_MAPPING.get(levtype, '')}")
+    if level is not None:
+        modification.append(f"level={level}")
 
     return ",".join(modification)
 
@@ -78,7 +81,9 @@ def _verify_modifications(
     date: str | None = None,
     time: str | None = None,
     step: int | str | None = None,
-    number: int | None = None):
+    number: int | None = None,
+    level: float | None = None
+    ):
 
     with open(str(path) + "_modified", "rb") as f:
         gid = eccodes.codes_grib_new_from_file(f)
@@ -90,6 +95,8 @@ def _verify_modifications(
             assert eccodes.codes_get(gid, "step", str) == str(step)
         if number is not None:
             assert eccodes.codes_get(gid, "number", int) == int(number)
+        if level is not None:
+            assert eccodes.codes_get(gid, "level", float) == float(level)
         eccodes.codes_release(gid)
 
 
@@ -100,16 +107,17 @@ def _modify_grib_file(
     step: int | str | None = None,
     number: int | None = None,
     levtype: str | None = None,
+    level: float | None = None
 ) -> None:
     """Modify keys in a GRIB file for testing."""
 
-    modification = _build_modification_string(date, time, step, number, levtype)
+    modification = _build_modification_string(date, time, step, number, levtype, level)
 
     print("Modifying GRIB file: %s %s" % (path, modification))
 
     cnt = _process_grib_file(path, modification)
 
-    _verify_modifications(path, date, time, step, number)
+    _verify_modifications(path, date, time, step, number, level)
 
     shutil.move(str(path) + "_modified", str(path))
 
