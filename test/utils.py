@@ -9,7 +9,7 @@ import eccodes
 import pytest
 
 def _generate_file_to_upload(
-    base_path: Path, data_dir: Path, suffix="", random=False
+    base_path: Path, data_dir: Path, suffix="", random=False, levelist=False
 ) -> tuple[Path, str, str]:
 
     file_timestamp = datetime.now().strftime("%y%m%d") + "00"
@@ -24,7 +24,10 @@ def _generate_file_to_upload(
     file_name = "_FXINP_lfrf00010000_003" + suffix
     file_to_upload = dst_folder / file_name
 
-    shutil.copy(data_dir / "test.grib", file_to_upload)
+    if levelist:
+        shutil.copy(data_dir / "test_levelist.grib", file_to_upload)
+    else:
+        shutil.copy(data_dir / "test.grib", file_to_upload)
 
     return file_to_upload, file_name, file_timestamp
 

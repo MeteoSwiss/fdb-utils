@@ -122,15 +122,21 @@ def test_get_archived_forecast_empty_request(tmp_path, data_dir, fdb):
 
     assert result == [datetime(2024, 2, 2, 3, 0)]
 
-# def test_list_all_values_levelist_sorting(tmp_path, data_dir, fdb):
+def test_list_all_values_levelist_sorting(tmp_path, data_dir, fdb):
 
-#     file_to_upload_1, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True)
+    file_to_upload_1, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True, levelist=True)
+    file_to_upload_2, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True, levelist=True)
+    file_to_upload_3, _, _ = _generate_file_to_upload(tmp_path, data_dir, random=True, levelist=True)
 
-#     _modify_grib_file(file_to_upload_1, date='20240203', time='600', levelist=float(2), step=3)
+    _modify_grib_file(file_to_upload_1, date='20240202', time='300', level=float(1), step=3)
+    _modify_grib_file(file_to_upload_2, date='20240203', time='600', level=float(3), step=3)
+    _modify_grib_file(file_to_upload_3, date='20240203', time='900', level=float(2), step=3)
 
-#     with open(file_to_upload_1, "rb") as f:
-#         fdb.archive(f.read())
+    for file in (file_to_upload_1, file_to_upload_2, file_to_upload_3):
+        with open(file, "rb") as f:
+            fdb.archive(f.read())
 
-#     fdb.flush()
+    fdb.flush()
 
-#     assert list_all_values(date='20240203')['time'] == {'0600'}
+    assert list_all_values('levelist')['levelist'] == {1.0, 2.0, 3.0}
+    assert list_all_values(date='20240203')['levelist'] == {2.0, 3.0}
