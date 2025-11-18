@@ -24,6 +24,25 @@ def _add_key_value(key_name: str, key_value, res: dict) -> dict:
 
     return res
 
+def _print_result(flt_keys: str, output: dict) -> None:
+    for requested_key in flt_keys:
+        if requested_key not in output:
+            print(f'{requested_key}: Key not found')
+
+    if not output:
+        print('No metadata found matching your request.')
+
+    for key, value in output.items():
+        if not value:
+            continue
+
+        if key == 'levelist':
+            value = sorted(value, key=float)
+        else:
+            print(f'{key}: {value}')
+
+    print('')
+
 
 def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set[str | int]]:
     """
@@ -88,22 +107,7 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
                 result.setdefault(key, set())
                 _add_key_value(key,value,result)
 
-
-    for requested_key in filter_keys:
-        if requested_key not in result:
-            print(f'{requested_key}: Key not found')
-
-    if not result:
-        print('No metadata found matching your request.')
-
-    for key, value in result.items():
-        if value:
-            if key == 'levelist':
-                value = sorted(value, key=float)
-            else:
-                print(f'{key}: {value}')
-
-    print('')
+    _print_result(filter_keys, output=result)
     return result
 
 
