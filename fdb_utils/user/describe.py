@@ -12,6 +12,18 @@ def _validate_filter(filter_by_values: dict) -> None:
         if k not in SCHEMA_KEYS:
             raise RuntimeError(f"Key {k} must be one of '{', '.join(SCHEMA_KEYS)}'")
 
+def _add_key_value(key_name: str, key_value, res: dict) -> dict:
+    if key_name not in ('number', 'levelist'):
+        res[key_name].add(key_value)
+    elif key_value is None:
+        return res
+    elif key_name == 'number' and key_value:
+        res[key_name].add(int(key_value))
+    elif key_name == 'levelist' and key_value:
+        res[key_name].add(float(key_value))
+
+    return res
+
 
 def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set[str | int]]:
     """
@@ -61,32 +73,21 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     result: dict[str, set[str | int]] = {}
 
     for el in pyfdb.list(request, True, True):
-        if not filter_keys:
-            for key, value in el['keys'].items():
-
-                result.setdefault(key, set())
-
-                if key == 'number' and value:
-                    result[key].add(int(value))
-                elif key == 'levelist' and value:
-                    result[key].add(float(value))
-                elif key not in ('number', 'levelist'):
-                    result[key].add(value)
-
-        else:
+        if filter_keys:
             for key in filter_keys:
 
                 result.setdefault(key, set())
 
                 if key in el['keys']:
                     value = el['keys'][key]
+                    _add_key_value(key,value,result)
 
-                    if key == 'number' and value:
-                        result[key].add(int(value))
-                    elif key == 'levelist' and value:
-                        result[key].add(float(value))
-                    elif key not in ('number', 'levelist'):
-                        result[key].add(value)
+        else:
+            for key, value in el['keys'].items():
+
+                result.setdefault(key, set())
+                _add_key_value(key,value,result)
+
 
     for requested_key in filter_keys:
         if requested_key not in result:
