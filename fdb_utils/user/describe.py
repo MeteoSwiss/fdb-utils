@@ -2,6 +2,7 @@
 
 import logging
 from datetime import datetime
+from typing import Tuple
 
 _logger = logging.getLogger(__name__)
 
@@ -12,7 +13,7 @@ def _validate_filter(filter_by_values: dict) -> None:
         if k not in SCHEMA_KEYS:
             raise RuntimeError(f"Key {k} must be one of '{', '.join(SCHEMA_KEYS)}'")
 
-def _add_key_value(key_name: str, key_value, res: dict) -> dict:
+def _add_key_value(key_name: Tuple[str,...], key_value, res: dict) -> dict:
     if key_name not in ('number', 'levelist'):
         res[key_name].add(key_value)
     elif key_value is None:
@@ -92,20 +93,14 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     result: dict[str, set[str | int]] = {}
 
     for el in pyfdb.list(request, True, True):
-        if filter_keys:
-            for key in filter_keys:
+        el_keys = el.get("keys", {})
 
-                result.setdefault(key, set())
+        keys_to_process = filter_keys if filter_keys else el_keys.keys()
 
-                if key in el['keys']:
-                    value = el['keys'][key]
-                    _add_key_value(key,value,result)
-
-        else:
-            for key, value in el['keys'].items():
-
-                result.setdefault(key, set())
-                _add_key_value(key,value,result)
+        for key in keys_to_process:
+            result.setdefault(key, set())
+            if key in el_keys:
+                _add_key_value(key, el_keys[key], result)
 
     _print_result(filter_keys, output=result)
     return result
