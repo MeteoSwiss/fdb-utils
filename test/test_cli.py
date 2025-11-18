@@ -18,12 +18,12 @@ def test_info():
 def test_list_all_abort():
     result = runner.invoke(app, ["list"], input='N')
     assert result.exit_code == 1
-    assert "Are you sure you want list everything in FDB? (may take some time)." in result.stdout
+    assert "Are you sure you want to list everything in FDB? (may take some time)." in result.stdout
 
 def test_list_all():
     result = runner.invoke(app, ["list"], input='Y')
     assert result.exit_code == 0
-    assert "Are you sure you want list everything in FDB? (may take some time)." in result.stdout
+    assert "Are you sure you want to list everything in FDB? (may take some time)." in result.stdout
 
 def test_list_filter():
     result = runner.invoke(app, ["list", "--filter", "date=20240606,number=0,step=0"], input='Y')
@@ -31,7 +31,7 @@ def test_list_filter():
     assert "Keys/Values in FDB for {'date': '20240606', 'number': '0', 'step': '0'}:" in result.stdout
 
 def test_list_show(fdb):
-    result = runner.invoke(app, ["list", "--show", "date,number,step"], input='Y')
+    result = runner.invoke(app, ["list", "date,number,step"], input='Y')
     print(result.stdout)
     assert result.exit_code == 0
     assert "Keys/Values of date, number, step in FDB:" in result.stdout

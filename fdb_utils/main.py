@@ -21,13 +21,13 @@ validate_environment()
 
 @app.command("list")
 def list_metadata(
-    show: Annotated[str, typer.Option(help='The keys to print, eg. "step,number,param"')] = "",
-    filter_values: Annotated[str, typer.Option("--filter", help='The metadata to filter results by, eg "date=20240624,time=0600".')] = ""
+    show: Annotated[str, typer.Argument(help='The keys to print, eg. "step,number,param"')] = "",
+    filter_values: Annotated[str, typer.Option("--filter", "-f", help='The metadata to filter results by, eg "date=20240624,time=0600".')] = ""
     ) -> None:
     """List a union of metadata key/value pairs of GRIB messages archived to FDB."""
 
     if not filter_values:
-        list_all = typer.confirm("Are you sure you want list everything in FDB? (may take some time).")
+        list_all = typer.confirm("Are you sure you want to list everything in FDB? (may take some time).")
         if not list_all:
             raise typer.Abort()
 
