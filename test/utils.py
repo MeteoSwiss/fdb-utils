@@ -24,6 +24,7 @@ def _generate_file_to_upload(
     file_name = "_FXINP_lfrf00010000_003" + suffix
     file_to_upload = dst_folder / file_name
 
+    # If levelist=True we choose a GRIB file with 3 vertical levels
     if levelist:
         shutil.copy(data_dir / "test_levelist.grib", file_to_upload)
     else:
