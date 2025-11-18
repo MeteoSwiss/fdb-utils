@@ -13,7 +13,7 @@ def _validate_filter(filter_by_values: dict) -> None:
         if k not in SCHEMA_KEYS:
             raise RuntimeError(f"Key {k} must be one of '{', '.join(SCHEMA_KEYS)}'")
 
-def _add_key_value(key_name: Tuple[str,...], key_value, res: dict) -> dict:
+def _add_key_value(key_name: str, key_value, res: dict) -> dict:
     if key_name not in ('number', 'levelist'):
         res[key_name].add(key_value)
     elif key_value is None:
@@ -25,7 +25,7 @@ def _add_key_value(key_name: Tuple[str,...], key_value, res: dict) -> dict:
 
     return res
 
-def _print_result(flt_keys: str, output: dict) -> None:
+def _print_result(flt_keys: Tuple[str,...], output: dict) -> None:
     for requested_key in flt_keys:
         if requested_key not in output:
             print(f'{requested_key}: Key not found')
