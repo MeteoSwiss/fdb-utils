@@ -17,15 +17,15 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     """
     Print and return values from FDB, filtered by specified keys and values.
 
-    This function retrieves key-value pairs from FDB using the `pyfdb` library, 
-    optionally filtered by specific keys and values. It prints the keys and their corresponding 
+    This function retrieves key-value pairs from FDB using the `pyfdb` library,
+    optionally filtered by specific keys and values. It prints the keys and their corresponding
     values from the database and returns a dictionary with the results.
     If no keys or values match the filters, 'None' is printed and an empty dictionary is returned.
 
     Parameters:
     -----------
     filter_keys : str
-        Argument list of schema dimensions to filter the results by. 
+        Argument list of schema dimensions to filter the results by.
         If no keys are provided, all keys are included.
     filter_by_values : str
         Keyword arguments specifying key-value pairs to filter the results.
@@ -34,7 +34,7 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     Returns:
     --------
     dict
-        A dictionary where the keys are the dimensions and the 
+        A dictionary where the keys are the dimensions and the
         values are sets containing the corresponding values from FDB.
 
     Example:
@@ -62,28 +62,31 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
 
     for el in pyfdb.list(request, True, True):
         if not filter_keys:
-            for key in el['keys']:
-                value = el['keys'].get(key)
-                if not key in result:
-                    result[key] = set()
-                if key not in ('number', 'levelist'):
-                    result[key].add(value)
-                elif key == 'number' and value:
+            for key, value in el['keys'].items():
+
+                result.setdefault(key, set())
+
+                if key == 'number' and value:
                     result[key].add(int(value))
                 elif key == 'levelist' and value:
                     result[key].add(float(value))
+                elif key not in ('number', 'levelist'):
+                    result[key].add(value)
+
         else:
             for key in filter_keys:
-                if not key in result:
-                    result[key] = set()
+
+                result.setdefault(key, set())
+
                 if key in el['keys']:
-                    value = el['keys'].get(key)
-                    if key not in ('number', 'levelist'):
-                        result[key].add(value)
-                    elif key == 'number' and value:
+                    value = el['keys'][key]
+
+                    if key == 'number' and value:
                         result[key].add(int(value))
                     elif key == 'levelist' and value:
                         result[key].add(float(value))
+                    elif key not in ('number', 'levelist'):
+                        result[key].add(value)
 
     for requested_key in filter_keys:
         if requested_key not in result:
@@ -93,10 +96,11 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
         print('No metadata found matching your request.')
 
     for key, value in result.items():
-        if key == 'levelist' and value:
-            value = sorted(value, key=float)
         if value:
-            print(f'{key}: {value}')
+            if key == 'levelist':
+                value = sorted(value, key=float)
+            else:
+                print(f'{key}: {value}')
 
     print('')
     return result
