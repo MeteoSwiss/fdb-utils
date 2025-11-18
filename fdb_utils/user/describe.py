@@ -2,7 +2,6 @@
 
 import logging
 from datetime import datetime
-from typing import Tuple
 
 _logger = logging.getLogger(__name__)
 
@@ -13,51 +12,20 @@ def _validate_filter(filter_by_values: dict) -> None:
         if k not in SCHEMA_KEYS:
             raise RuntimeError(f"Key {k} must be one of '{', '.join(SCHEMA_KEYS)}'")
 
-def _add_key_value(key_name: str, key_value, res: dict) -> dict:
-    if key_name not in ('number', 'levelist'):
-        res[key_name].add(key_value)
-    elif key_value is None:
-        return res
-    elif key_name == 'number' and key_value:
-        res[key_name].add(int(key_value))
-    elif key_name == 'levelist' and key_value:
-        res[key_name].add(float(key_value))
-
-    return res
-
-def _print_result(flt_keys: Tuple[str,...], output: dict) -> None:
-    for requested_key in flt_keys:
-        if requested_key not in output:
-            print(f'{requested_key}: Key not found')
-
-    if not output:
-        print('No metadata found matching your request.')
-
-    for key, value in output.items():
-        if not value:
-            continue
-
-        if key == 'levelist':
-            value = sorted(value, key=float)
-        else:
-            print(f'{key}: {value}')
-
-    print('')
-
 
 def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set[str | int]]:
     """
     Print and return values from FDB, filtered by specified keys and values.
 
-    This function retrieves key-value pairs from FDB using the `pyfdb` library,
-    optionally filtered by specific keys and values. It prints the keys and their corresponding
+    This function retrieves key-value pairs from FDB using the `pyfdb` library, 
+    optionally filtered by specific keys and values. It prints the keys and their corresponding 
     values from the database and returns a dictionary with the results.
     If no keys or values match the filters, 'None' is printed and an empty dictionary is returned.
 
     Parameters:
     -----------
     filter_keys : str
-        Argument list of schema dimensions to filter the results by.
+        Argument list of schema dimensions to filter the results by. 
         If no keys are provided, all keys are included.
     filter_by_values : str
         Keyword arguments specifying key-value pairs to filter the results.
@@ -66,7 +34,7 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     Returns:
     --------
     dict
-        A dictionary where the keys are the dimensions and the
+        A dictionary where the keys are the dimensions and the 
         values are sets containing the corresponding values from FDB.
 
     Example:
@@ -93,16 +61,30 @@ def list_all_values(*filter_keys: str, **filter_by_values: str) -> dict[str, set
     result: dict[str, set[str | int]] = {}
 
     for el in pyfdb.list(request, True, True):
-        el_keys = el.get("keys", {})
+        if not filter_keys:
+            for key in el['keys']:
+                if not key in result:
+                    result[key] = set()
+                result[key].add(el['keys'][key] if key != 'number' else int(el['keys'][key]))
+        else:
+            for key in filter_keys:
+                if not key in result:
+                    result[key] = set()
+                if key in el['keys']:
+                    result[key].add(el['keys'][key] if key != 'number' else int(el['keys'][key]))
 
-        keys_to_process = filter_keys if filter_keys else el_keys.keys()
+    for requested_key in filter_keys:
+        if requested_key not in result:
+            print(f'{requested_key}: Key not found')
 
-        for key in keys_to_process:
-            result.setdefault(key, set())
-            if key in el_keys:
-                _add_key_value(key, el_keys[key], result)
+    if not result:
+        print('No metadata found matching your request.')
 
-    _print_result(filter_keys, output=result)
+    for key, value in result.items():
+        if value:
+            print(f'{key}: {value}')
+
+    print('')
     return result
 
 
