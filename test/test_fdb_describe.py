@@ -6,6 +6,15 @@ from fdb_utils.user.describe import list_all_values, get_archived_forecasts,SCHE
 from test.utils import _generate_file_to_upload, _modify_grib_file
 from test.conftest import fdb
 
+def preprocess(show, filter_values):
+
+    show_keys = show.split(',') if show else []
+
+    filter_key_value_pairs = filter_values.split(',')
+    filter_by_values = dict(pair.split('=') for pair in filter_key_value_pairs) if filter_values else {}
+
+    return list_all_values(*show_keys, **filter_by_values)
+
 def test_list_all_values(tmp_path, data_dir, fdb):
 
     # Generate GRIB files with different dates and archive to FDB
@@ -27,6 +36,8 @@ def test_list_all_values(tmp_path, data_dir, fdb):
 
     fdb.flush()
 
+    assert preprocess("date", "") == {'date': {'20240203', '20240202'}}
+    assert preprocess("date","date=20240203") == {'date': {'20240203'}}
     assert list_all_values('time')['time'] == {'0300', '0600'}
     assert list_all_values('step')['step'] == {'0','1','2','3'}
     assert list_all_values('step', date='20240202')['step'] == {'0','1'}
@@ -34,7 +45,7 @@ def test_list_all_values(tmp_path, data_dir, fdb):
     assert list_all_values(date='20240203')['step'] == {'2','3'}
     assert list_all_values(date='20240203')['number'] == {1,2}
 
-def test_listall_values_filtered(tmp_path, data_dir, fdb):
+def test_list_all_values_filtered(tmp_path, data_dir, fdb):
 
     # Generate GRIB files with different dates and archive to FDB
     files = []
