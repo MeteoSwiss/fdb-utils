@@ -11,7 +11,7 @@ pipeline {
 
     triggers {
         // We expect the ICON-CH2-EPS forecast to be fully archived 3.5 hours after the job start.
-        cron('TZ=UTC\n30 9,15 * * *')
+        cron('TZ=UTC\n30 9,15 * * 1-5')
     }
 
     stages {
