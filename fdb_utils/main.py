@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated
+from typing import Annotated, Optional
 import sys
 import os
 
@@ -21,22 +21,27 @@ validate_environment()
 
 @app.command("list")
 def list_metadata(
-    show: Annotated[str, typer.Argument(help='The keys to print, eg. "step,number,param"')] = "",
-    filter_values: Annotated[str, typer.Option(
-        "--filter", "-f", help='The metadata to filter results by, eg "date=20240624,time=0600".'
-        )] = ""
+    show: Annotated[
+        Optional[str],
+        typer.Argument(help='The keys to print, eg. "step,number,param"')
+        ] = None,
+    filter_values: Annotated[
+        Optional[str],
+        typer.Option("--filter", "-f", help='The metadata to filter results by, eg "date=20240624,time=0600".')
+        ] = None
     ) -> None:
     """List a union of metadata key/value pairs of GRIB messages archived to FDB."""
 
     if not filter_values:
         list_all = typer.confirm("Are you sure you want to list everything in FDB? (may take some time).")
+        filter_by_values = {}
         if not list_all:
             raise typer.Abort()
+    else:
+        filter_key_value_pairs = filter_values.split(',')
+        filter_by_values = dict(pair.split('=') for pair in filter_key_value_pairs)
 
     show_keys = show.split(',') if show else []
-
-    filter_key_value_pairs = filter_values.split(',')
-    filter_by_values = dict(pair.split('=') for pair in filter_key_value_pairs) if filter_values else {}
 
     os.environ['METKIT_RAW_PARAM']='1'
 
