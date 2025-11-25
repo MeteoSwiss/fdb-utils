@@ -4,7 +4,7 @@ fdb-utils
 Python library for users and admins of `FDB <https://github.com/ecmwf/fdb>`_.
 
 
-Installation 
+Installation
 --------------
 
 Dependencies
@@ -13,7 +13,7 @@ FDB Utils depends on the FDB and Eccodes libraries, these are not installed with
 
 .. code-block:: console
 
-    export FDB5_CONFIG_FILE=<path/to/fdb-config.yaml> 
+    export FDB5_CONFIG_FILE=<path/to/fdb-config.yaml>
     export FDB5_HOME=<path/to/fdb/home>
     export ECCODES_HOME=<path/to/eccodes/home>
 
@@ -46,6 +46,14 @@ Run tests
 
 .. code-block:: console
 
+    poetry run pytest
+
+Run tests within the uenv
+
+.. code-block:: console
+
+    uenv start --view=realtime fdb/5.18:<latest_version>
+    poetry install
     poetry run pytest
 
 Generate documentation
