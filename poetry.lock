@@ -1531,14 +1531,14 @@ reference = "pypi-mch"
 
 [[package]]
 name = "pyfdb"
-version = "0.1.2"
+version = "0.1.3"
 description = "Python interface to FDB"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "pyfdb-0.1.2-py3-none-any.whl", hash = "sha256:31af9d05063440253c9ab48b4e96fc6f1e76f5e5fbf0cdea5f19dbad1593e837"},
-    {file = "pyfdb-0.1.2.tar.gz", hash = "sha256:cbb79f159db6bf5453d0f3a26504624ce0fc9450ea9e2d8f7691705506dbf276"},
+    {file = "pyfdb-0.1.3-py3-none-any.whl", hash = "sha256:a9d3b69e19fbeb57bb0c6ccbe69d32fe3551e8b1eda4635c36ff6f88eacc2d66"},
+    {file = "pyfdb-0.1.3.tar.gz", hash = "sha256:b070f5dde8de850e82729d03c1e97a2f76281572624826383ac0049b3587352e"},
 ]
 
 [package.dependencies]
@@ -2296,4 +2296,4 @@ reference = "pypi-mch"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "66dd939549a1ea3961f8c049e74184a761d0d8ef05fbde37631aefe02d442d54"
+content-hash = "3ae68f071c09107197db88d820ec17807517e195269383bceb98db574e37802c"
