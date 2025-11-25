@@ -6,7 +6,7 @@ pipeline {
     }
 
     agent {
-        label 'balfrinew'
+        label 'balfrin'
     }
 
     triggers {
