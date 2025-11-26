@@ -38,9 +38,13 @@ def _print_result(flt_keys: Tuple[str,...], output: dict) -> None:
             continue
 
         if key == 'levelist':
-            value = sorted(value, key=float)
+            sorted_value = sorted(value, key=float)
+        elif key == 'step':
+            sorted_value = sorted(value, key=int)
         else:
-            print(f'{key}: {value}')
+            sorted_value = sorted(value)
+
+        print(f'{key}: {sorted_value}')
 
     print('')
 
