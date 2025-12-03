@@ -33,6 +33,7 @@ cffi = "^1.16.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.18.1"
+pytest-mock = "*"
 pydata-sphinx-theme = "^0.16.1"
 pylint = "^3.3.8"
 pytest = "^8.4.2"
