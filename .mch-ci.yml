@@ -11,6 +11,7 @@ default:
   - test:
       - unit:
           - pythonContainerTest:
+              imageName: ${var.containerImageName}
               pullAlways: false
               removeLocalImage: false
       - unitWithoutCoverage:

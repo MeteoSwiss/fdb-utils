@@ -8,6 +8,9 @@ class Globals {
     // Main Python version
     static String mainPythonVersion = '3.11'
 
+     // Name of the container image
+    static String containerImageName = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/fdb-utils-test'
+
     // Pin mchbuild to stable version to avoid breaking changes
     static String mchbuildPipPackage = 'mchbuild>=0.10.0,<0.11.0'
 }
@@ -67,7 +70,7 @@ pipeline {
                 stage('python 3.11') {
                     steps {
                         sh """
-                            mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' build.install test.unit
+                            mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' -s containerImageName=${Globals.containerImageName} test.unit
                         """
                     }
                 }
