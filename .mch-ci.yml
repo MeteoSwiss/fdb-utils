@@ -1,0 +1,66 @@
+default:
+  - build:
+      - install:
+          - pythonContainerInstall:
+              removeLocalImage: false
+      - docs:
+          - script: mkdir -p doc/_build
+          - pythonContainerDocs:
+              pullAlways: false
+              removeLocalImage: false
+  - test:
+      - unit:
+          - pythonContainerTest:
+              pullAlways: false
+              removeLocalImage: false
+      - unitWithoutCoverage:
+          - pythonContainerTest:
+              installDependencies: true
+              withCoverage: false
+      - lint:
+          - pythonContainerLint:
+              pullAlways: false
+              removeLocalImage: false
+          - pythonContainerTypeCheck:
+              pullAlways: false
+              removeLocalImage: false
+  - verify:
+      - securityScan:
+          - securityGenerateSbom:
+              target: file://poetry.lock
+          - securityVulnerabilityScan:
+              format: [ 'html', 'print' ]
+              severity: [ 'CRITICAL', 'HIGH' ]
+              outputPrefix: sbom
+  - publish:
+      - pypi:
+          - pythonContainerBuildAndPublishPackage:
+              pullAlways: false
+              version: ${var.semanticVersion}
+      - docs:
+          - openshiftPublishDocs:
+              docSrc: doc/_build/
+              docType: python
+
+# Alternative setup for installing and testing the service locally using the system's Python environment.
+local:
+  - build:
+      - install:
+          - pythonLocalInstall:
+      - docs:
+          - pythonLocalDocs:
+      - format:
+          - pythonLocalFormat:
+              inPlace: true
+  - test:
+      - unit:
+          - pythonLocalTest:
+      - lint:
+          - pythonLocalLint:
+          - pythonLocalTypeCheck:
+
+variables:
+  project: fdb-utils
+  notifyOnNightlyFailure: noemi.nellen@meteoswiss.ch
+  ocpHostNameForEnv:
+    prod: api.prod.cp1.meteoswiss.ch:6443
