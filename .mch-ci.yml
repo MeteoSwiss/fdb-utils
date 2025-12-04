@@ -8,16 +8,16 @@ default:
           - containerConstructImageName:
       - artifacts:
           - containerBuildImage:
-              imageName: ${var.containerImageName}-tester
+              imageName: ${var.containerImageName}
               imageTag: ${var.semanticVersion}
               pullAlways: false
   - test:
       - unit:
           - pythonContainerTest:
-              imageName: ${var.containerImageName}-tester
+              imageName: ${var.containerImageName}
               imageTag: ${var.semanticVersion}
               pullAlways: false
-              commands: > 
+              commands: >
               packageManager: ''
               removeLocalImage: false
       - lint:
@@ -63,7 +63,7 @@ local:
           - pythonLocalTypeCheck:
 
 variables:
+  solution: numericalweatherpredictions
   project: fdb-utils
   notifyOnNightlyFailure: p_polytope@meteoswiss.ch
-  ocpHostNameForEnv:
-    prod: api.prod.cp1.meteoswiss.ch:6443
+  semanticVersion: 0.0.0
