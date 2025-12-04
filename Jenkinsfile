@@ -9,7 +9,7 @@ class Globals {
     static String mainPythonVersion = '3.11'
 
      // Name of the container image
-    static String IMAGE_NAME = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/fdb-utils-test'
+    static String containerImageName = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/fdb-utils-test'
 
     // Pin mchbuild to stable version to avoid breaking changes
     static String mchbuildPipPackage = 'mchbuild>=0.10.0,<0.11.0'
