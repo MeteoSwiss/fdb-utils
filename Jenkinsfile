@@ -9,7 +9,7 @@ class Globals {
     static String mainPythonVersion = '3.11'
 
      // Name of the container image
-    static String containerImageName = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/fdb-utils-test'
+    static String IMAGE_NAME = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/fdb-utils-test'
 
     // Pin mchbuild to stable version to avoid breaking changes
     static String mchbuildPipPackage = 'mchbuild>=0.10.0,<0.11.0'
@@ -69,8 +69,13 @@ pipeline {
             parallel {
                 stage('python 3.11') {
                     steps {
+                        echo '---- BUILDING CONTAINER IMAGES ----'
                         sh """
-                            mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' -s containerImageName=${Globals.containerImageName} test.unit
+                            mchbuild -s semanticVersion=test -s containerImageName=${Globals.containerImageName} build.artifacts
+                        """
+                        echo("---- RUNNING UNIT TESTS & COLLECTING COVERAGE ----")
+                        sh """
+                            mchbuild -s semanticVersion=${Globals.semanticVersion} -s containerImageName=${Globals.containerImageName} test.unit
                         """
                     }
                 }

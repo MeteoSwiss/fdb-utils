@@ -1,23 +1,25 @@
 default:
   - build:
-      - install:
-          - pythonContainerInstall:
-              removeLocalImage: false
-      - docs:
-          - script: mkdir -p doc/_build
-          - pythonContainerDocs:
+      - checkGivenSemanticVersion:
+          - checkSemanticVersion:
+      - getSemanticVersion:
+          - gitCalculateSemanticVersion:
+      - getImageName:
+          - containerConstructImageName:
+      - artifacts:
+          - containerBuildImage:
+              imageName: ${var.containerImageName}-tester
+              imageTag: ${var.semanticVersion}
               pullAlways: false
-              removeLocalImage: false
   - test:
       - unit:
           - pythonContainerTest:
-              imageName: ${var.containerImageName}
+              imageName: ${var.containerImageName}-tester
+              imageTag: ${var.semanticVersion}
               pullAlways: false
+              commands: > 
+              packageManager: ''
               removeLocalImage: false
-      - unitWithoutCoverage:
-          - pythonContainerTest:
-              installDependencies: true
-              withCoverage: false
       - lint:
           - pythonContainerLint:
               pullAlways: false
@@ -62,6 +64,6 @@ local:
 
 variables:
   project: fdb-utils
-  notifyOnNightlyFailure: noemi.nellen@meteoswiss.ch
+  notifyOnNightlyFailure: p_polytope@meteoswiss.ch
   ocpHostNameForEnv:
     prod: api.prod.cp1.meteoswiss.ch:6443
