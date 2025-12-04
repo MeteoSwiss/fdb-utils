@@ -13,13 +13,16 @@ default:
               pullAlways: false
   - test:
       - unit:
-          - pythonContainerTest:
+          - containerRunImage:
               imageName: ${var.containerImageName}
               imageTag: ${var.semanticVersion}
-              pullAlways: false
               commands: >
+                poetry install --all-extras
+                poetry run python -m coverage run --data-file=.coverage -m pytest --junitxml=junit-3.11.xml test/
+                poetry run coverage xml
               packageManager: ''
               removeLocalImage: false
+              pullAlways: false
       - lint:
           - pythonContainerLint:
               pullAlways: false
@@ -67,4 +70,4 @@ variables:
   project: fdb-utils
   notifyOnNightlyFailure: p_polytope@meteoswiss.ch
   semanticVersion: 0.0.0
-  containerImageName: 
+  containerImageName:
