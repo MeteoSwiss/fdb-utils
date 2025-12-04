@@ -61,6 +61,11 @@ pipeline {
                         PIP_INDEX_URL=https://hub.meteoswiss.ch/nexus/repository/python-all/simple \
                             .venv-mchbuild/bin/pip install --upgrade "${Globals.mchbuildPipPackage}"
                     """
+                    Globals.containerImageName = sh(
+                        script: 'mchbuild -g containerImageName build.getImageName',
+                        returnStdout: true
+                    )
+                    echo "Using container image name: ${Globals.containerImageName}"
                 }
             }
         }
@@ -71,11 +76,11 @@ pipeline {
                     steps {
                         echo '---- BUILDING CONTAINER IMAGES ----'
                         sh """
-                            mchbuild build.artifacts
+                            mchbuild -s containerImageName=${Globals.containerImageName} build.artifacts
                         """
                         echo("---- RUNNING UNIT TESTS & COLLECTING COVERAGE ----")
                         sh """
-                            mchbuild test.unit
+                            mchbuild -s containerImageName=${Globals.containerImageName} test.unit
                         """
                     }
                 }

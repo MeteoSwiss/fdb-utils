@@ -67,3 +67,4 @@ variables:
   project: fdb-utils
   notifyOnNightlyFailure: p_polytope@meteoswiss.ch
   semanticVersion: 0.0.0
+  containerImageName: 
