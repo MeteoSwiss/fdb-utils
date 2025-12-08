@@ -14,14 +14,12 @@ default:
       - docs:
           - script: mkdir -p doc/_build
           - pythonContainerDocs:
-              imageName: ${var.containerImageName}
-              imageTag: ${var.semanticVersion}
+              pullAlways: false
+              removeLocalImage: false
               commands: >
                 poetry install &&
                 poetry run sphinx-build doc doc/_build
-              pullAlways: false
-              packageManager: ''
-              removeLocalImage: false
+
   - test:
       - unit:
           - containerRunImage:
