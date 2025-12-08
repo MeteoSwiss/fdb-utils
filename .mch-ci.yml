@@ -18,7 +18,7 @@ default:
               imageTag: ${var.semanticVersion}
               commands: >
                 poetry install --all-extras &&
-                poetry run python -m coverage run --data-file=.coverage -m pytest --junitxml=junit-3.11.xml test/ &&
+                poetry run python -m coverage run --data-file=.coverage -m pytest --junitxml=test_reports/junit-3.11.xml test/ &&
                 poetry run coverage xml
               pullAlways: false
               packageManager: ''
