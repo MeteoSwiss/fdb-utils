@@ -138,7 +138,7 @@ pipeline {
                 script {
                     echo '---- BUILDING PROJECT DOCUMENTATION ----'
                     sh """
-                        mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' build.docs
+                        mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' -s containerImageName=${Globals.containerImageName} build.docs
                     """
                 }
             }
