@@ -20,15 +20,22 @@ default:
                 poetry install --all-extras &&
                 poetry run python -m coverage run --data-file=.coverage -m pytest --junitxml=junit-3.11.xml test/ &&
                 poetry run coverage xml
+              pullAlways: false
               packageManager: ''
               removeLocalImage: false
-              pullAlways: false
       - lint:
           - pythonContainerLint:
+              imageName: ${var.containerImageName}
+              imageTag: ${var.semanticVersion}
+              commands: poetry run pylint -rn --output-format=parseable --output=pylint.log --exit-zero fdb_utils
               pullAlways: false
+              packageManager: ''
               removeLocalImage: false
           - pythonContainerTypeCheck:
+              imageName: ${var.containerImageName}
+              imageTag: ${var.semanticVersion}
               pullAlways: false
+              packageManager: ''
               removeLocalImage: false
   - verify:
       - securityScan:
