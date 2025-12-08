@@ -16,7 +16,9 @@ default:
           - pythonContainerDocs:
               imageName: ${var.containerImageName}
               imageTag: ${var.semanticVersion}
-              commands: poetry install && poetry run sphinx-build doc doc/_build
+              commands: >
+                poetry install &&
+                poetry run sphinx-build doc doc/_build
               pullAlways: false
               packageManager: ''
               removeLocalImage: false
