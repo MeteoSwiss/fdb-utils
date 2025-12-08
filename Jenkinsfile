@@ -80,7 +80,7 @@ pipeline {
                         """
                         echo("---- RUNNING UNIT TESTS & COLLECTING COVERAGE ----")
                         sh """
-                            mchbuild -s semanticVersion=${Globals.semanticVersion} -s containerImageName=${Globals.containerImageName} test.unit
+                            mchbuild -s containerImageName=${Globals.containerImageName} test.unit
                         """
                     }
                 }
