@@ -82,6 +82,7 @@ pipeline {
                         sh """
                             mchbuild -s containerImageName=${Globals.containerImageName} test.unit
                         """
+                        echo '---- UNIT TESTS SUCCESSFULLY RUN ----'
                     }
                 }
             }
