@@ -97,7 +97,7 @@ pipeline {
             steps {
                 echo '---- LINTING & TYPE CHECKING ----'
                 sh """
-                    mchbuild -s pythonVersion="${Globals.mainPythonVersion}" test.lint
+                    mchbuild -s containerImageName=${Globals.containerImageName} test.lint
                 """
 
                 script {
