@@ -121,7 +121,7 @@ pipeline {
                     // Adjust source paths in coverage.xml for compatibility with SonarQube
                     // This is necessary due to differences in file structure when using Podman
                     // Reference: https://stackoverflow.com/questions/57220171/sonarqube-client-fails-to-parse-pytest-coverage-results
-                    sh "sed -i 's/\\/src\\/app-root/.\\//g' test_reports/coverage.xml"
+                    sh "sed -i 's/\\/src\\/app-root/.\\//g' test_reports/junit*.xml"
                     sh "${SCANNER_HOME}/bin/sonar-scanner"
                 }
 
