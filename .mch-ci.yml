@@ -87,3 +87,6 @@ variables:
   notifyOnNightlyFailure: p_polytope@meteoswiss.ch
   semanticVersion: 0.0.0
   containerImageName:
+  ocpHostNameForEnv:
+    prod: api.prod.cp1.meteoswiss.ch:6443
+
