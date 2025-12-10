@@ -1,0 +1,93 @@
+default:
+  - build:
+      - checkGivenSemanticVersion:
+          - checkSemanticVersion:
+      - getSemanticVersion:
+          - gitCalculateSemanticVersion:
+      - getImageName:
+          - containerConstructImageName:
+      - artifacts:
+          - containerBuildImage:
+              imageName: ${var.containerImageName}
+              imageTag: ${var.semanticVersion}
+              pullAlways: false
+      - docs:
+          - script: mkdir -p doc/_build
+          - pythonContainerDocs:
+              pythonVersion: 3.11
+              pullAlways: false
+              removeLocalImage: false
+              commands: >
+                poetry install &&
+                poetry run sphinx-build doc doc/_build
+
+  - test:
+      - unit:
+          - containerRunImage:
+              imageName: ${var.containerImageName}
+              imageTag: ${var.semanticVersion}
+              commands: >
+                poetry install --all-extras &&
+                poetry run python -m coverage run --data-file=.coverage -m pytest --junitxml=test_reports/junit-3.11.xml test/ &&
+                poetry run coverage xml
+              pullAlways: false
+              packageManager: ''
+              removeLocalImage: false
+      - lint:
+          - pythonContainerLint:
+              imageName: ${var.containerImageName}
+              imageTag: ${var.semanticVersion}
+              commands: poetry run pylint -rn --output-format=parseable --output=pylint.log --exit-zero fdb_utils
+              pullAlways: false
+              packageManager: ''
+              removeLocalImage: false
+          - pythonContainerTypeCheck:
+              imageName: ${var.containerImageName}
+              imageTag: ${var.semanticVersion}
+              pullAlways: false
+              packageManager: ''
+              removeLocalImage: false
+  - verify:
+      - securityScan:
+          - securityGenerateSbom:
+              target: file://poetry.lock
+          - securityVulnerabilityScan:
+              format: [ 'html', 'print' ]
+              severity: [ 'CRITICAL', 'HIGH' ]
+              outputPrefix: sbom
+  - publish:
+      - pypi:
+          - pythonContainerBuildAndPublishPackage:
+              pythonVersion: 3.11
+              pullAlways: false
+              version: ${var.semanticVersion}
+      - docs:
+          - openshiftPublishDocs:
+              docSrc: doc/_build/
+              docType: python
+
+# Alternative setup for installing and testing the service locally using the system's Python environment.
+local:
+  - build:
+      - install:
+          - pythonLocalInstall:
+      - docs:
+          - pythonLocalDocs:
+      - format:
+          - pythonLocalFormat:
+              inPlace: true
+  - test:
+      - unit:
+          - pythonLocalTest:
+      - lint:
+          - pythonLocalLint:
+          - pythonLocalTypeCheck:
+
+variables:
+  solution: numericalweatherpredictions
+  project: fdb-utils
+  notifyOnNightlyFailure: p_polytope@meteoswiss.ch
+  semanticVersion: 0.0.0
+  containerImageName:
+  ocpHostNameForEnv:
+    prod: api.prod.cp1.meteoswiss.ch:6443

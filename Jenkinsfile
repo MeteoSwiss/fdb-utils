@@ -1,197 +1,167 @@
 class Globals {
-    // the library version
-    static String version = 'latest'
+    // set to true to abort the pipeline if the SonarQube quality gate fails
+    static boolean qualityGateAbortPipeline = false
 
-    // the default python version
-    static String pythonVersion = '3.11'
+    // Threshold for mypy issues before failing the build
+    static int mypyIssueThreshold = 10
 
-    // the tag used when publishing documentation
-    static String documentationTag = ''
 
-    static final String IMAGE_NAME = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/fdb-utils-test'
-    static final String IMAGE_REPO = 'docker-intern-nexus.meteoswiss.ch'
+     // Name of the container image
+    static String containerImageName = ''
+
+    // Pin mchbuild to stable version to avoid breaking changes
+    static String mchbuildPipPackage = 'mchbuild>=0.10.0,<0.11.0'
 }
 
-@Library('dev_tools@main') _
-pipeline {
-    agent {label 'podman'}
+String rebuild_cron = env.BRANCH_NAME == "main" ? "@midnight" : ""
 
-    parameters {
-        booleanParam(name: 'RELEASE_BUILD', defaultValue: false, description: 'Creates and publishes a new release')
-        booleanParam(name: 'PUBLISH_DOCUMENTATION', defaultValue: false, description: 'Publishes the generated documentation')
+pipeline {
+    agent { label 'podman' }
+
+    triggers { cron(rebuild_cron) }
+
+    options {
+        // Prevent concurrent builds; new builds wait for the current one to finish
+        disableConcurrentBuilds()
+
+        // Automatically discard old builds and artifacts to save space
+        buildDiscarder(logRotator(
+            artifactDaysToKeepStr: '7',  // Keep Jenkins artifacts for 7 days
+            artifactNumToKeepStr: '1',  // Keep only the latest Jenkins artifact
+            daysToKeepStr: '45',  // Keep build records for 45 days
+            numToKeepStr: '10'  // Keep the last 10 builds
+        ))
+
+        // Set a timeout for the pipeline build (1 hour)
+        timeout(time: 1, unit: 'HOURS')
+
+        // Use the specified GitLab connection for SCM integration to publish pipeline status
+        gitLabConnection('CollabGitLab')
     }
 
     environment {
-        PROJECT_NAME = 'fdb-utils'
-
-        PIP_USER = 'python-mch'
-        SCANNER_HOME = tool name: 'Sonarqube-certs-PROD', type: 'hudson.plugins.sonar.SonarRunnerInstallation';
-
+        PATH = "$workspace/.venv-mchbuild/bin:$HOME/tools/openshift-client-tools:$HOME/tools/trivy:$PATH"
         HTTP_PROXY = 'http://proxy.meteoswiss.ch:8080'
         HTTPS_PROXY = 'http://proxy.meteoswiss.ch:8080'
         NO_PROXY = '.meteoswiss.ch,localhost'
-    }
-
-    options {
-        gitLabConnection('CollabGitLab')
-
-        // New jobs should wait until older jobs are finished
-        disableConcurrentBuilds()
-        // Discard old builds
-        buildDiscarder(logRotator(artifactDaysToKeepStr: '7', artifactNumToKeepStr: '1', daysToKeepStr: '45', numToKeepStr: '10'))
-        // Timeout the pipeline build after 1 hour
-        timeout(time: 1, unit: 'HOURS')
+        SCANNER_HOME = tool name: 'Sonarqube-certs-PROD', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
     }
 
     stages {
-        stage('Init') {
+        stage('Preflight') {
             steps {
                 updateGitlabCommitStatus name: 'Build', state: 'running'
-                script {
-                    Globals.documentationTag = env.BRANCH_NAME
-                }
-            }
-        }
 
-        stage('Prepare Test Image') {
-            steps {
-                withCredentials([usernamePassword(
-                                    credentialsId: 'openshift-nexus',
-                                    passwordVariable: 'NXPASS', 
-                                    usernameVariable: 'NXUSER')
-                            ]) {
-                    echo "---- BUILDING TEST IMAGE ----"
+                script {
+                    echo '---- INSTALLING MCHBUILD ----'
                     sh """
-                    podman build --pull -f Dockerfile -t "${Globals.IMAGE_NAME}:latest" .
+                        python -m venv .venv-mchbuild
+                        PIP_INDEX_URL=https://hub.meteoswiss.ch/nexus/repository/python-all/simple \
+                            .venv-mchbuild/bin/pip install --upgrade "${Globals.mchbuildPipPackage}"
                     """
-                    echo "---- PUBLISH TEST IMAGE ----"
-                    sh """
-                    echo $NXPASS | podman login ${Globals.IMAGE_REPO} -u $NXUSER --password-stdin
-                    podman push ${Globals.IMAGE_NAME}:latest
-                    """
+                    Globals.containerImageName = sh(
+                        script: 'mchbuild -g containerImageName build.getImageName',
+                        returnStdout: true
+                    )
+                    echo "Using container image name: ${Globals.containerImageName}"
                 }
             }
         }
 
         stage('Test') {
             parallel {
-                // python 3.11 is the default version, used for executing pylint, mypy, sphinx etc.
-                // all libs. are kept in the .venv folder
                 stage('python 3.11') {
                     steps {
-                        script {
-                            runWithPodman.call "${Globals.IMAGE_NAME}:latest",
-                                "poetry install --all-extras && " +
-                                "poetry run python -m coverage run --data-file=.coverage -m pytest --junitxml=junit-3.11.xml test/ && " +
-                                "poetry run coverage xml"
-                        }
+                        echo '---- BUILDING CONTAINER IMAGES ----'
+                        sh """
+                            mchbuild -s containerImageName=${Globals.containerImageName} build.artifacts
+                        """
+                        echo("---- RUNNING UNIT TESTS & COLLECTING COVERAGE ----")
+                        sh """
+                            mchbuild -s containerImageName=${Globals.containerImageName} test.unit
+                        """
+                        echo '---- UNIT TESTS COMPLETED ----'
                     }
                 }
             }
             post {
                 always {
-                    junit keepLongStdio: true, testResults: 'junit*.xml'
+                    junit keepLongStdio: true, testResults: 'test_reports/junit*.xml'
                 }
             }
         }
 
-        stage('Run Pylint') {
+        stage('Scan') {
             steps {
-                script {
-                    runWithPodman.pythonCmd Globals.pythonVersion,
-                        'poetry run pylint -rn --output-format=parseable --output=pylint.log --exit-zero fdb_utils'
-                }
-            }
-        }
+                echo '---- LINTING & TYPE CHECKING ----'
+                sh """
+                    mchbuild -s containerImageName=${Globals.containerImageName} test.lint
+                """
 
-        // myPy is treated inside Jenkins because it is not yet integrated with SonarQube (the rest of the CI results is published therein)
-        stage('Run Mypy') {
-            steps {
                 script {
-                    runWithPodman.pythonCmd Globals.pythonVersion,
-                        'poetry run mypy -p fdb_utils | grep error | tee mypy.log'
-                    recordIssues(qualityGates: [[threshold: 10, type: 'TOTAL', unstable: false]], tools: [myPy(pattern: 'mypy.log')])
-                }
-            }
-            post {
-                failure {
-                    script {
-                        error "Too many mypy issues, exiting now..."
+                    try {
+                        // Record issues from mypy type checks
+                        recordIssues(
+                            qualityGates: [[threshold: Globals.mypyIssueThreshold, type: 'TOTAL', unstable: false]],
+                            tools: [myPy(pattern: 'test_reports/mypy.log')]
+                        )
+                    }
+                    catch (err) {
+                        error "Too many mypy issues detected (threshold: ${Globals.mypyIssueThreshold}). Aborting..."
                     }
                 }
-            }
-        }
 
-        stage('SonarQube Analysis') {
-            steps {
+                echo("---- DEPENDENCIES SECURITY SCAN ----")
+                sh "mchbuild verify"
+
+                echo("---- SONARQUBE ANALYSIS ----")
                 withSonarQubeEnv("Sonarqube-PROD") {
-                    // fix source path in coverage.xml
-                    // (required because coverage is calculated using podman which uses a differing file structure)
-                    // https://stackoverflow.com/questions/57220171/sonarqube-client-fails-to-parse-pytest-coverage-results
-                    sh "sed -i 's/\\/src\\/app-root/.\\//g' coverage.xml"
+                    // Adjust source paths in coverage.xml for compatibility with SonarQube
+                    // This is necessary due to differences in file structure when using Podman
+                    // Reference: https://stackoverflow.com/questions/57220171/sonarqube-client-fails-to-parse-pytest-coverage-results
+                    sh "sed -i 's/\\/src\\/app-root/.\\//g' test_reports/junit*.xml"
                     sh "${SCANNER_HOME}/bin/sonar-scanner"
                 }
-            }
-        }
 
-        stage("Quality Gate") {
-            steps {
+                echo("---- SONARQUBE QUALITY GATE ----")
                 timeout(time: 1, unit: 'HOURS') {
-                    // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
-                    // true = set pipeline to UNSTABLE, false = don't
-                    waitForQualityGate abortPipeline: true
+                    // If the quality gate fails, the pipeline will be aborted based on the configured flag
+                    waitForQualityGate abortPipeline: Globals.qualityGateAbortPipeline
                 }
             }
         }
 
-        stage('Release') {
-            when { expression { params.RELEASE_BUILD } }
-            steps {
-                echo 'Build a wheel and publish'
-                withCredentials([usernamePassword(
-                                    credentialsId: 'github app credential for the meteoswiss github organization (limited to repositories used by APN)',
-                                    passwordVariable: 'GITHUB_ACCESS_TOKEN', 
-                                    usernameVariable: 'GITHUB_APP')
-                            ]) {
-                    script {
-
-                        sh "git remote set-url origin https://${GITHUB_APP}:${GITHUB_ACCESS_TOKEN}@github.com/MeteoSwiss/fdb-utils"
-                        
-                        withCredentials([string(credentialsId: "python-mch-nexus-secret", variable: 'PIP_PWD')]) {
-                            runDevScript("build/poetry-lib-release.sh ${env.PIP_USER} $PIP_PWD ${Globals.pythonVersion}")
-                            Globals.version = sh(script: 'git describe --tags --abbrev=0', returnStdout: true).trim()
-                            env.TAG_NAME = Globals.version
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Build Documentation') {
-            when { expression { params.PUBLISH_DOCUMENTATION } }
+        stage('Build Docs') {
             steps {
                 script {
-                    runWithPodman.pythonCmd Globals.pythonVersion,
-                        'poetry install && poetry run sphinx-build doc doc/_build'
+                    echo '---- BUILDING PROJECT DOCUMENTATION ----'
+                    sh """
+                        mchbuild build.docs
+                    """
                 }
             }
         }
 
-        stage('Publish Documentation') {
-            when { expression { params.PUBLISH_DOCUMENTATION } }
-            environment {
-                PATH = "$HOME/tools/openshift-client-tools:$PATH"
-                KUBECONFIG = "$workspace/.kube/config"
-            }
+        stage('Publish Artifacts & Docs') {
+            when { expression { env.TAG_NAME } }  // Indicates a release build
             steps {
-                withCredentials([string(credentialsId: "documentation-main-prod-token", variable: 'TOKEN')]) {
-                    sh "oc login https://api.cp.meteoswiss.ch:6443 --token \$TOKEN"
-                    publishDoc 'doc/_build/', env.PROJECT_NAME, Globals.version, 'python', Globals.documentationTag
+                script {
+                    echo "---- BUILDING AND PUBLISHING WHEELS ----"
+                    withCredentials([string(credentialsId: 'python-mch-nexus-secret', variable: 'PYPIPASS')]) {
+                        sh """
+                            PYPIUSER=python-mch mchbuild -s semanticVersion=${env.TAG_NAME} publish.pypi
+                        """
+                    }
                 }
-            }
-            post {
-                cleanup {
-                    sh 'oc logout || true'
+
+                script {
+                    echo "---- PUBLISHING DOCUMENTATION ----"
+                    withCredentials([string(credentialsId: 'documentation-main-prod-token', variable: 'DOC_TOKEN')]) {
+                        sh """
+                            mchbuild -s deploymentEnvironment=prod \
+                                -s docVersion=${env.TAG_NAME} publish.docs
+                        """
+                    }
                 }
             }
         }
@@ -199,23 +169,24 @@ pipeline {
 
     post {
         aborted {
+            echo 'Build was aborted.'
             updateGitlabCommitStatus name: 'Build', state: 'canceled'
         }
         failure {
+            echo 'Build failed. Sending notification email...'
             updateGitlabCommitStatus name: 'Build', state: 'failed'
-            echo 'Sending email'
+            sh 'df -h'
             emailext(subject: "${currentBuild.fullDisplayName}: ${currentBuild.currentResult}",
                 attachLog: true,
                 attachmentsPattern: 'generatedFile.txt',
+                to: env.BRANCH_NAME == 'main' ?
+                    sh(script: "mchbuild -g notifyOnNightlyFailure", returnStdout: true) : '',
                 body: "Job '${env.JOB_NAME} #${env.BUILD_NUMBER}': ${env.BUILD_URL}",
                 recipientProviders: [requestor(), developers()])
         }
         success {
-            echo 'Build succeeded'
+            echo 'Build completed successfully.'
             updateGitlabCommitStatus name: 'Build', state: 'success'
-        }
-        cleanup{
-            cleanWs()
         }
     }
 }
