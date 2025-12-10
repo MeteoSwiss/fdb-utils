@@ -159,7 +159,7 @@ pipeline {
                     echo "---- PUBLISHING DOCUMENTATION ----"
                     withCredentials([string(credentialsId: 'documentation-main-prod-token', variable: 'DOC_TOKEN')]) {
                         sh """
-                            mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' -s deploymentEnvironment=prod \
+                            mchbuild -s deploymentEnvironment=prod \
                                 -s docVersion=${env.TAG_NAME} publish.docs
                         """
                     }
