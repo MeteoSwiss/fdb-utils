@@ -58,6 +58,7 @@ default:
   - publish:
       - pypi:
           - pythonContainerBuildAndPublishPackage:
+              pythonVersion: 3.11
               pullAlways: false
               version: ${var.semanticVersion}
       - docs:
