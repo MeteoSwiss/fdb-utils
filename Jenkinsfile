@@ -5,8 +5,6 @@ class Globals {
     // Threshold for mypy issues before failing the build
     static int mypyIssueThreshold = 10
 
-    // Main Python version
-    static String mainPythonVersion = '3.11'
 
      // Name of the container image
     static String containerImageName = ''
