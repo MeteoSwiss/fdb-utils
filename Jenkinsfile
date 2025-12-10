@@ -70,7 +70,7 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Test') {
             parallel {
                 stage('python 3.11') {
                     steps {
