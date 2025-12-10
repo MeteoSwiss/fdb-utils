@@ -14,6 +14,7 @@ default:
       - docs:
           - script: mkdir -p doc/_build
           - pythonContainerDocs:
+              pythonVersion: 3.11
               pullAlways: false
               removeLocalImage: false
               commands: >
@@ -84,7 +85,6 @@ local:
 variables:
   solution: numericalweatherpredictions
   project: fdb-utils
-  mainPythonVersion: 3.11
   notifyOnNightlyFailure: p_polytope@meteoswiss.ch
   semanticVersion: 0.0.0
   containerImageName:
