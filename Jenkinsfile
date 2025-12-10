@@ -149,8 +149,7 @@ pipeline {
                     echo "---- BUILDING AND PUBLISHING WHEELS ----"
                     withCredentials([string(credentialsId: 'python-mch-nexus-secret', variable: 'PYPIPASS')]) {
                         sh """
-                            PYPIUSER=python-mch mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' \
-                                -s semanticVersion=${env.TAG_NAME} publish.pypi
+                            PYPIUSER=python-mch mchbuild -s semanticVersion=${env.TAG_NAME} publish.pypi
                         """
                     }
                 }
