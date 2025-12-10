@@ -84,9 +84,9 @@ local:
 variables:
   solution: numericalweatherpredictions
   project: fdb-utils
+  mainPythonVersion: 3.11
   notifyOnNightlyFailure: p_polytope@meteoswiss.ch
   semanticVersion: 0.0.0
   containerImageName:
   ocpHostNameForEnv:
     prod: api.prod.cp1.meteoswiss.ch:6443
-

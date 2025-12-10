@@ -136,7 +136,7 @@ pipeline {
                 script {
                     echo '---- BUILDING PROJECT DOCUMENTATION ----'
                     sh """
-                        mchbuild -s pythonVersion=3.11 build.docs
+                        mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' build.docs
                     """
                 }
             }
