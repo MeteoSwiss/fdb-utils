@@ -136,7 +136,7 @@ pipeline {
                 script {
                     echo '---- BUILDING PROJECT DOCUMENTATION ----'
                     sh """
-                        mchbuild build.docs
+                        mchbuild -s containerImageName=${Globals.containerImageName} build.docs
                     """
                 }
             }
