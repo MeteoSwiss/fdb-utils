@@ -25,7 +25,7 @@ pipeline {
     }
 
     environment {
-        UENV_VERSION = "fdb/5.18:v1"
+        UENV_VERSION = "fdb/5.18:v2"
         POETRY_VERSION = '1.8.1'
     }
 
