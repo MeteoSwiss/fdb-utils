@@ -33,7 +33,7 @@ pipeline {
         stage('setup python env') {
             steps {
                 sh '''#!/usr/bin/env bash
-                uenv image pull ${UENV_VERSION}
+                # uenv image pull ${UENV_VERSION} TEMPORARILY DISABLED WHILE UENV IMAGE SERVER UNREACHABLE!
                 echo "Installing poetry in venv at \$(pwd)/.venv"
                 uenv run --view=realtime ${UENV_VERSION} -- python -m venv .venv
                 uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/pip install poetry==${POETRY_VERSION}
