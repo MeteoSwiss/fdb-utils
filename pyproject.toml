@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "fdb-utils"
 # Define <major>.<minor>.<patch> and aligne it with the newly created tag
-version = "1.4.4"
+version = "1.5.4"
 description = "Python library for users and admins of FDB."
 authors = ["Victoria Cherkas <victoria.cherkas@meteoswiss.ch>"]
 readme = "README.rst"
