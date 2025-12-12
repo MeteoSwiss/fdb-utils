@@ -6,46 +6,29 @@ default:
           - gitCalculateSemanticVersion:
       - getImageName:
           - containerConstructImageName:
-      - artifacts:
-          - containerBuildImage:
-              imageName: ${var.containerImageName}
-              imageTag: ${var.semanticVersion}
-              pullAlways: false
+      - install:
+          - pythonContainerInstall:
+              removeLocalImage: false
       - docs:
           - script: mkdir -p doc/_build
           - pythonContainerDocs:
-              pythonVersion: 3.11
               pullAlways: false
               removeLocalImage: false
-              commands: >
-                poetry install &&
-                poetry run sphinx-build doc doc/_build
-
   - test:
       - unit:
-          - containerRunImage:
-              imageName: ${var.containerImageName}
-              imageTag: ${var.semanticVersion}
-              commands: >
-                poetry install --all-extras &&
-                poetry run python -m coverage run --data-file=.coverage -m pytest --junitxml=test_reports/junit-3.11.xml test/ &&
-                poetry run coverage xml
+          - pythonContainerTest:
               pullAlways: false
-              packageManager: ''
               removeLocalImage: false
+      - unitWithoutCoverage:
+          - pythonContainerTest:
+              installDependencies: true
+              withCoverage: false
       - lint:
           - pythonContainerLint:
-              imageName: ${var.containerImageName}
-              imageTag: ${var.semanticVersion}
-              commands: poetry run pylint -rn --output-format=parseable --output=pylint.log --exit-zero fdb_utils
               pullAlways: false
-              packageManager: ''
               removeLocalImage: false
           - pythonContainerTypeCheck:
-              imageName: ${var.containerImageName}
-              imageTag: ${var.semanticVersion}
               pullAlways: false
-              packageManager: ''
               removeLocalImage: false
   - verify:
       - securityScan:
@@ -58,7 +41,6 @@ default:
   - publish:
       - pypi:
           - pythonContainerBuildAndPublishPackage:
-              pythonVersion: 3.11
               pullAlways: false
               version: ${var.semanticVersion}
       - docs:
@@ -88,6 +70,5 @@ variables:
   project: fdb-utils
   notifyOnNightlyFailure: p_polytope@meteoswiss.ch
   semanticVersion: 0.0.0
-  containerImageName:
   ocpHostNameForEnv:
     prod: api.prod.cp1.meteoswiss.ch:6443
