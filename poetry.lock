@@ -1591,7 +1591,10 @@ files = [
 [package.dependencies]
 astroid = ">=3.3.8,<=3.4.0.dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
-dill = {version = ">=0.3.6", markers = "python_version >= \"3.11\""}
+dill = [
+    {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
+    {version = ">=0.3.6", markers = "python_version == \"3.11\""},
+]
 isort = ">=4.2.5,<5.13 || >5.13,<7"
 mccabe = ">=0.6,<0.8"
 platformdirs = ">=2.2"
@@ -1996,7 +1999,10 @@ files = [
 ]
 
 [package.dependencies]
-astroid = {version = ">=2.7", markers = "python_version < \"3.12\""}
+astroid = [
+    {version = ">=3", markers = "python_version >= \"3.12\""},
+    {version = ">=2.7", markers = "python_version < \"3.12\""},
+]
 Jinja2 = "*"
 PyYAML = "*"
 sphinx = ">=7.4.0"
@@ -2312,5 +2318,5 @@ reference = "pypi-mch"
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.11,<3.12"
-content-hash = "6a56c2f1876e07cd08bd77affe9af6d88d6b39e9fc83b75e9ec9172bd38d86f2"
+python-versions = ">=3.11"
+content-hash = "08c29a2c78fde7608d2c384745b3e2ee7d06b3fe140e6be4bbfd7cad728ddf82"
