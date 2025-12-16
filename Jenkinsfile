@@ -10,7 +10,7 @@ class Globals {
     static String containerImageName = ''
 
     // Pin mchbuild to stable version to avoid breaking changes
-    static String mchbuildPipPackage = 'mchbuild>=0.10.0,<0.11.0'
+    static String mchbuildPipPackage = 'mchbuild>=0.11.3,<0.12.0'
 }
 
 String rebuild_cron = env.BRANCH_NAME == "main" ? "@midnight" : ""
