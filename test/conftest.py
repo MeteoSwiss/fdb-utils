@@ -114,19 +114,19 @@ def _set_local_fdb_install_prefix(config: dict):
     try:
         import pyfdb
     except RuntimeError:
-        if 'FDB5_HOME' in config:
-            os.environ['FDB5_HOME'] = config['FDB5_HOME']
+        if 'FDB5_DIR' in config:
+            os.environ['FDB5_DIR'] = config['FDB5_DIR']
         else:
-            raise pytest.UsageError("Missing FDB5_HOME environment variable. Set FDB5_HOME in test/.env for local testing.")
+            raise pytest.UsageError("Missing FDB5_DIR environment variable. Set FDB5_DIR in test/.env for local testing.")
 
-        lib =  Path(config['FDB5_HOME']) / 'lib' / 'libfdb5.so'
-        lib64 = Path(config['FDB5_HOME']) / 'lib64' / 'libfdb5.so'
-        binary = Path(config['FDB5_HOME']) / 'bin'
+        lib =  Path(config['FDB5_DIR']) / 'lib' / 'libfdb5.so'
+        lib64 = Path(config['FDB5_DIR']) / 'lib64' / 'libfdb5.so'
+        binary = Path(config['FDB5_DIR']) / 'bin'
 
         if lib.exists() or lib64.exists():
-            print("FDB5_HOME: %s" % os.getenv("FDB5_HOME", 'unset'))
+            print("FDB5_DIR: %s" % os.getenv("FDB5_DIR", 'unset'))
         else:
-            raise pytest.UsageError("Invalid FDB5_HOME path (%s): missing libfdb5.so" % config['FDB5_HOME'])
+            raise pytest.UsageError("Invalid FDB5_DIR path (%s): missing libfdb5.so" % config['FDB5_DIR'])
 
 
         if binary.exists():

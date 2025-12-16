@@ -10,7 +10,7 @@ COPY --from=dependencies /opt/spack-root /opt/spack-root/
 COPY --from=dependencies /opt/spack-view /opt/spack-view/
 
 ENV ECCODES_DIR=/opt/spack-view/
-ENV FDB5_HOME=/opt/spack-view/
+ENV FDB5_DIR=/opt/spack-view/
 ENV PATH="/opt/spack-view/bin:${PATH}"
 
 RUN apt-get -yqq update \

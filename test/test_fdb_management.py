@@ -18,7 +18,7 @@ def mock_fdb_wipe_exe(tmp_path, monkeypatch):
     fdb_wipe_exe = tmp_path / "bin" / "fdb-wipe"
     os.mkdir(tmp_path / "bin")
     fdb_wipe_exe.write_text("fake fdb-wipe executable content")
-    monkeypatch.setenv("FDB5_HOME", str(tmp_path))
+    monkeypatch.setenv("FDB5_DIR", str(tmp_path))
     return str(fdb_wipe_exe)
 
 
