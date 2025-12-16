@@ -5,14 +5,12 @@ class Globals {
     // Threshold for mypy issues before failing the build
     static int mypyIssueThreshold = 10
 
-    // Main Python version
-    static String mainPythonVersion = '3.11'
 
      // Name of the container image
     static String containerImageName = ''
 
     // Pin mchbuild to stable version to avoid breaking changes
-    static String mchbuildPipPackage = 'mchbuild>=0.11.3,<0.12.0'
+    static String mchbuildPipPackage = 'mchbuild>=0.10.0,<0.11.0'
 }
 
 String rebuild_cron = env.BRANCH_NAME == "main" ? "@midnight" : ""
@@ -70,27 +68,19 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Test') {
             parallel {
-                stage('python 3.13') {
-                    steps {
-                        sh """
-                            mchbuild -s pythonVersion='"3.13"' -s testReportName=junit-3.13.xml test.unitWithoutCoverage
-                        """
-                    }
-                }
-                stage('python 3.12') {
-                    steps {
-                        sh """
-                            mchbuild -s pythonVersion='"3.12"' -s testReportName=junit-3.12.xml test.unitWithoutCoverage
-                        """
-                    }
-                }
                 stage('python 3.11') {
                     steps {
+                        echo '---- BUILDING CONTAINER IMAGES ----'
                         sh """
-                            mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' build.install test.unit
+                            mchbuild -s containerImageName=${Globals.containerImageName} build.artifacts
                         """
+                        echo("---- RUNNING UNIT TESTS & COLLECTING COVERAGE ----")
+                        sh """
+                            mchbuild -s containerImageName=${Globals.containerImageName} test.unit
+                        """
+                        echo '---- UNIT TESTS COMPLETED ----'
                     }
                 }
             }
@@ -105,18 +95,19 @@ pipeline {
             steps {
                 echo '---- LINTING & TYPE CHECKING ----'
                 sh """
-                    mchbuild -s pythonVersion="${Globals.mainPythonVersion}" test.lint
+                    mchbuild -s containerImageName=${Globals.containerImageName} test.lint
                 """
 
                 script {
-                    // Mypy quality gate
-                    def annotatedReport = scanForIssues(
-                        tool: myPy(pattern: 'test_reports/mypy.log'),
-                    )
-                    publishIssues issues: [annotatedReport]
-                    def totalMypyIssues = annotatedReport.size()
-                    if (totalMypyIssues > Globals.mypyIssueThreshold) {
-                        error("Too many mypy issues detected (${totalMypyIssues} > ${Globals.mypyIssueThreshold}). Aborting build.")
+                    try {
+                        // Record issues from mypy type checks
+                        recordIssues(
+                            qualityGates: [[threshold: Globals.mypyIssueThreshold, type: 'TOTAL', unstable: false]],
+                            tools: [myPy(pattern: 'test_reports/mypy.log')]
+                        )
+                    }
+                    catch (err) {
+                        error "Too many mypy issues detected (threshold: ${Globals.mypyIssueThreshold}). Aborting..."
                     }
                 }
 
@@ -145,7 +136,7 @@ pipeline {
                 script {
                     echo '---- BUILDING PROJECT DOCUMENTATION ----'
                     sh """
-                        mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' build.docs
+                        mchbuild build.docs
                     """
                 }
             }
@@ -158,8 +149,7 @@ pipeline {
                     echo "---- BUILDING AND PUBLISHING WHEELS ----"
                     withCredentials([string(credentialsId: 'python-mch-nexus-secret', variable: 'PYPIPASS')]) {
                         sh """
-                            PYPIUSER=python-mch mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' \
-                                -s semanticVersion=${env.TAG_NAME} publish.pypi
+                            PYPIUSER=python-mch mchbuild -s semanticVersion=${env.TAG_NAME} publish.pypi
                         """
                     }
                 }
@@ -168,7 +158,7 @@ pipeline {
                     echo "---- PUBLISHING DOCUMENTATION ----"
                     withCredentials([string(credentialsId: 'documentation-main-prod-token', variable: 'DOC_TOKEN')]) {
                         sh """
-                            mchbuild -s pythonVersion='"${Globals.mainPythonVersion}"' -s deploymentEnvironment=prod \
+                            mchbuild -s deploymentEnvironment=prod \
                                 -s docVersion=${env.TAG_NAME} publish.docs
                         """
                     }
