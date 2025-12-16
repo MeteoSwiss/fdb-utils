@@ -32,10 +32,19 @@ def wipe_fdb(forecasts: list[datetime], exception: int = 0, model: str = "") -> 
         wipe_filter += f",model={model}"
 
     # FDB wipe is not available in the Python API so use the CLI.
-    fdb_wipe_exe = f"{os.environ['FDB5_HOME']}/bin/fdb-wipe"
+    if "FDB5_HOME" in os.environ:
+        fdb_wipe_exe = f"{os.environ['FDB5_HOME']}/bin/fdb-wipe"
+    elif "FDB5_DIR" in os.environ:
+        fdb_wipe_exe = f"{os.environ['FDB5_DIR']}/bin/fdb-wipe"
+    else:
+        raise RuntimeError(
+            "Cannot find fdb-wipe executable: set either FDB5_HOME or FDB5_DIR."
+        )
 
     if not Path(fdb_wipe_exe).exists():
-        raise RuntimeError(f"fdb wipe executable does not exist: {fdb_wipe_exe}")
+        raise RuntimeError(
+            f"Cannot find fdb-wipe executable: no file at {fdb_wipe_exe}"
+        )
 
     _logger.info("Deleting forecast: %s", wipe_filter)
 
