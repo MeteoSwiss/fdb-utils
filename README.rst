@@ -14,7 +14,7 @@ FDB Utils depends on the FDB and Eccodes libraries, these are not installed with
 .. code-block:: console
 
     export FDB5_CONFIG_FILE=<path/to/fdb-config.yaml>
-    export FDB5_HOME=<path/to/fdb/home>
+    export FDB5_DIR=<path/to/fdb/home>
     export ECCODES_HOME=<path/to/eccodes/home>
 
 See `MeteoSwiss Confluence <https://meteoswiss.atlassian.net/wiki/x/gY_XC>`_ for the environment variables to use for MeteoSwiss's realtime FDB (at CSCS).
