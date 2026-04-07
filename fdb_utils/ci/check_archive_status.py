@@ -52,7 +52,7 @@ COLLECTIONS: dict[str, Collection] = {
 }
 
 
-# The poller archives the hourly rotated latlon grib files for constant params (suffix 'c'),
+# The poller archives the hourly grib files for constant params (suffix 'c'),
 # single and multi level params (no suffix), and params on pressure levels (suffix 'p').
 # Each file contains data for all associated parameters for a single step and ctrl/ensemble
 # member. For further details on what each file type means, see:
