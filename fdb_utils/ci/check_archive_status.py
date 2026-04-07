@@ -138,25 +138,6 @@ def get_archive_status(
     return archive_status
 
 
-def fx_filename(suffix: str, member: int, step: int) -> str:
-    """Construct the ICON fxshare filename for the provided parameters."""
-    filename_template = "_FXINP_lfrf{dd:02}{hh:02}000_{mmm:03}"
-    days = step // 24
-    hours = step % 24
-    filename = filename_template.format(dd=days, hh=hours, mmm=member) + suffix
-    return filename
-
-
-def get_failed_files(archive_status: dict[str, list[list[int]]]) -> list[str]:
-    failed_files = []
-    for file_suffix, param_status in archive_status.items():
-        for member, steps_status in enumerate(param_status):
-            for step, success in enumerate(steps_status):
-                if not success:
-                    failed_files.append(fx_filename(file_suffix, member, step))
-    return failed_files
-
-
 class ForecastStatus(IntEnum):
     MISSING = 0
     COMPLETE = 1
@@ -290,14 +271,6 @@ def main(model: str) -> bool:
         f"heatmap_{model}_{last_run_start.strftime('%d%m%y-%H')}.png",
         bbox_inches="tight",
     )
-
-    # If any files in the latest forecast failed, print the names and return failure.
-    if history_status[0] != ForecastStatus.COMPLETE:
-        logging.warning(
-            "The following files failed to archive: %s",
-            get_failed_files(latest_archive_status),
-        )
-        return False
 
     if any(status == ForecastStatus.MISSING for status in history_status):
         logging.warning(
