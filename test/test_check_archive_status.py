@@ -174,7 +174,7 @@ def return_steps(missing_values: dict[tuple[str], dict[str, list[int]]]):
 def test_get_archive_status(list_values, tmp_path, data_dir):
     # Row 0 = control ("ctrl"); rows 1.. = numbers "1.."
     missing_values = {
-        ("500004", "20250202", "0300"): {"ctrl": [0], "1": [0]},
+        ("500007", "20250202", "0300"): {"ctrl": [0], "1": [0]},
         ("500006", "20250202", "0300"): {"ctrl": [30, 31], "9": [0, 1]},
         ("500001", "20250202", "0300"): {"1": [0], "2": [10]},
     }
@@ -211,8 +211,8 @@ def test_historical_archive_status(list_values, tmp_path, data_dir):
 
     # Set one incomplete forecast and one missing forecast.
     missing_values = {
-        ("500004", "20250202", "0000"): {"ctrl": [0]},  # latest-1 incomplete
-        ("500004", "20250201", "2100"): all_members_map([0]),  # latest-2 missing
+        ("500007", "20250202", "0000"): {"ctrl": [0]},  # latest-1 incomplete
+        ("500007", "20250201", "2100"): all_members_map([0]),  # latest-2 missing
         ("500006", "20250201", "2100"): all_members_map(list(range(33))),
         ("500001", "20250201", "2100"): all_members_map(list(range(33))),
     }
