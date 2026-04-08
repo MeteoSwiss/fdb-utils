@@ -153,7 +153,7 @@ def return_steps(missing_values: dict[tuple[str], dict[str, list[int]]]):
     def list_all_values_mock(*filter_keys: str, **filter_by_values: str):
         model = filter_by_values["model"]
         param = filter_by_values["param"]
-        num_steps = 1 if param == "500004" else cas.COLLECTIONS[model].steps
+        num_steps = 1 if param == "500007" else cas.COLLECTIONS[model].steps
 
         date = filter_by_values["date"]
         time = filter_by_values["time"]
