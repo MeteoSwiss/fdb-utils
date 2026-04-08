@@ -63,7 +63,7 @@ COLLECTIONS: dict[str, Collection] = {
 # single parameter that exists in the file to determine the status.
 PARAMS: list[Parameter] = [
     Parameter(
-        id="500004", file_suffix="c", is_constant=True, field_filter={"levtype": "sfc"}
+        id="500007", file_suffix="c", is_constant=True, field_filter={"levtype": "sfc"}
     ),
     Parameter(
         id="500006",
