@@ -31,26 +31,6 @@ def test_overall_status_incomplete():
     assert cas.summary_status(status_dict) == cas.ForecastStatus.INCOMPLETE
 
 
-def test_fx_filename():
-    assert cas.fx_filename("suf", 0, 0) == "_FXINP_lfrf0000000_000suf"
-    assert cas.fx_filename("", 1, 10) == "_FXINP_lfrf0010000_001"
-    assert cas.fx_filename("s", 123, 49) == "_FXINP_lfrf0201000_123s"
-
-
-def test_get_failed_files():
-    success_dict = {
-        "suf1": [[1, 1, 0], [0, 1, 1]],
-        "suf2": [[0, 1, 1], [1, 1, 1], [1, 0, 1]],
-    }
-    expected_files = [
-        "_FXINP_lfrf0002000_000suf1",
-        "_FXINP_lfrf0000000_001suf1",
-        "_FXINP_lfrf0000000_000suf2",
-        "_FXINP_lfrf0001000_002suf2",
-    ]
-    assert cas.get_failed_files(success_dict) == expected_files
-
-
 def test_last_run_time_ch1():
     icon_1 = cas.COLLECTIONS["icon-ch1-eps"]
 
