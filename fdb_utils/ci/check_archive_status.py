@@ -272,6 +272,9 @@ def main(model: str) -> bool:
         bbox_inches="tight",
     )
 
+    if history_status[0] != ForecastStatus.COMPLETE:
+        return False
+
     if any(status == ForecastStatus.MISSING for status in history_status):
         logging.warning(
             "The forecast is missing for the following dates: %s",
