@@ -27,6 +27,7 @@ pipeline {
     environment {
         UENV_VERSION = "fdb/5.21:v2"
         POETRY_VERSION = '2.2.1'
+        POETRY_VIRTUALENVS_IN_PROJECT = 'true'
     }
 
     stages {
@@ -34,11 +35,11 @@ pipeline {
             steps {
                 sh '''#!/usr/bin/env bash
                 uenv image pull ${UENV_VERSION}
-                echo "Installing poetry in venv at \$(pwd)/.venv"
-                uenv run --view=realtime ${UENV_VERSION} -- python -m venv .venv
-                uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/pip install poetry==${POETRY_VERSION}
-                uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/poetry env use $(which python)
-                uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/poetry install
+                echo "Installing poetry in venv at \$(pwd)/.venv-poetry"
+                uenv run --view=realtime ${UENV_VERSION} -- python -m venv .venv-poetry
+                uenv run --view=realtime ${UENV_VERSION} -- .venv-poetry/bin/pip install poetry==${POETRY_VERSION}
+                uenv run --view=realtime ${UENV_VERSION} -- bash -c '.venv-poetry/bin/poetry env use $(which python)'
+                uenv run --view=realtime ${UENV_VERSION} -- .venv-poetry/bin/poetry install
                 '''
             }
         }
@@ -48,7 +49,7 @@ pipeline {
                 script{
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                         sh '''#!/usr/bin/env bash
-                        uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/poetry run pytest
+                        uenv run --view=realtime ${UENV_VERSION} -- .venv-poetry/bin/poetry run pytest
                         '''
                     }
                 }
@@ -60,7 +61,7 @@ pipeline {
                 script {
                     try {
                         sh '''#!/usr/bin/env bash
-                        uenv run --view=realtime ${UENV_VERSION} -- .venv/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
+                        uenv run --view=realtime ${UENV_VERSION} -- .venv-poetry/bin/poetry run python fdb_utils/ci/check_archive_status.py ${model}
                         '''
                     } finally {
                         archiveArtifacts artifacts: '**/*heatmap*.png', fingerprint: true
