@@ -52,7 +52,7 @@ Run tests within the uenv
 
 .. code-block:: console
 
-    uenv start --view=realtime fdb/5.18:<latest_version>
+    uenv start --view=realtime fdb/5.21:<latest_version>
     poetry install
     poetry run pytest
 

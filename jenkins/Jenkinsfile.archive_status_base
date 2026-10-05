@@ -25,8 +25,8 @@ pipeline {
     }
 
     environment {
-        UENV_VERSION = "fdb/5.18:v1@balfrin"
-        POETRY_VERSION = '1.8.1'
+        UENV_VERSION = "fdb/5.21:v2"
+        POETRY_VERSION = '2.2.1'
     }
 
     stages {
