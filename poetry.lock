@@ -841,20 +841,19 @@ reference = "pypi-mch"
 
 [[package]]
 name = "eccodes"
-version = "2.49.0"
+version = "2.47.0"
 description = "Python interface to the ecCodes GRIB and BUFR decoder/encoder"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "eccodes-2.49.0-cp310-cp310-win_amd64.whl", hash = "sha256:bd2c5b6a0a95c1995673489a80e965f62711ef4e324356223ba109e29feaaab2"},
-    {file = "eccodes-2.49.0-cp311-cp311-win_amd64.whl", hash = "sha256:572652b916a4290556ce34dc485a2b86ec2668d82d17a1489f22287ccadb2ea4"},
-    {file = "eccodes-2.49.0-cp312-cp312-win_amd64.whl", hash = "sha256:b032beffc39cd6b743534aca73897a0d508c62318cabba8fe8287803dbafbc98"},
-    {file = "eccodes-2.49.0-cp313-cp313-win_amd64.whl", hash = "sha256:63bc732fabb2ca63290bafcdcb8dd332e1814330b65ebacea9225b17db696662"},
-    {file = "eccodes-2.49.0-cp314-cp314-win_amd64.whl", hash = "sha256:c54c7cb75be1ba6e8b342a1149c3c1175d13eb8f51dd18893e6426348332e058"},
-    {file = "eccodes-2.49.0-cp39-cp39-win_amd64.whl", hash = "sha256:144432c8d5960186ea08db6881db98b740d4315ffe3e7bfb2e4a1604a459cfa3"},
-    {file = "eccodes-2.49.0-py3-none-any.whl", hash = "sha256:b2a51d05fc97a0739cf38c18e181e7b99706961330a5f1df6e538a4365ab3d84"},
-    {file = "eccodes-2.49.0.tar.gz", hash = "sha256:b6af2ebbba3722e32215b1058cc3c5694faf8f80579fe069a840bfcde58f35df"},
+    {file = "eccodes-2.47.0-cp310-cp310-win_amd64.whl", hash = "sha256:3a7438b259188821a5b05e5dd814f83924936ff9fe0897f6a157506fcaea9baf"},
+    {file = "eccodes-2.47.0-cp311-cp311-win_amd64.whl", hash = "sha256:3b71ae31bca13e4b62712405d7eb3c988b71b0b0bbd85fe4d3eacac7fc67ae27"},
+    {file = "eccodes-2.47.0-cp312-cp312-win_amd64.whl", hash = "sha256:7ab3b689fd3caa07451f7bcf07329b2268acdc7434bcedac8b13d1f20d3389c0"},
+    {file = "eccodes-2.47.0-cp313-cp313-win_amd64.whl", hash = "sha256:f5f9b71b6e2cb8c9b8349b88a09791e8fb6d51a4396d7160b3da2a83149a4973"},
+    {file = "eccodes-2.47.0-cp39-cp39-win_amd64.whl", hash = "sha256:867419198114f1a4620f0df00a0c17a4b3a8d4c5f284c14fd23e3d2723494580"},
+    {file = "eccodes-2.47.0-py3-none-any.whl", hash = "sha256:13d0b28bd58e94e2c303f42415ca0dcc56ab3febf0f52b1fb0f1d4aa5e7db8e1"},
+    {file = "eccodes-2.47.0.tar.gz", hash = "sha256:ae9207ef27c67656d068aab97f172abeb85fc3620f56faa22fdac5b1be75de69"},
 ]
 
 [package.dependencies]
