@@ -94,7 +94,7 @@ def test_fdb_definitions(tmp_path: Path, data_dir: Path, fdb):
         "stream": "enfo",
         "date": "20230410",
         "step": "4m",
-        "time": "0900",
+        "time": "0600",
     }
 
     keys_in_fdb: list[dict] = [item["keys"] for item in fdb.list(request, True, True)]
