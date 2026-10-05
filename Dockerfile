@@ -8,7 +8,10 @@ RUN mkdir -p /opt/spack-root/ /opt/spack-view/
 
 COPY --from=dependencies /opt/spack-root /opt/spack-root/
 COPY --from=dependencies /opt/spack-view /opt/spack-view/
+COPY --from=dependencies /opt/eccodes-cosmo /opt/eccodes-cosmo/
+COPY --from=dependencies /opt/eccodes-cosmo-mars /opt/eccodes-cosmo-mars/
 
+ENV ECCODES_DEFINITION_PATH=/opt/eccodes-cosmo/definitions:/opt/eccodes-cosmo-mars/definitions:/opt/spack-view/share/eccodes/definitions
 ENV ECCODES_DIR=/opt/spack-view/
 ENV FDB5_DIR=/opt/spack-view/
 ENV PATH="/opt/spack-view/bin:${PATH}"

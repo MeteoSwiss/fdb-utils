@@ -1,12 +1,9 @@
 import logging
 import os
 from pathlib import Path
-import requests
 import shutil
 import os
 import gc
-import tarfile
-import io
 
 import yaml
 import pytest
@@ -41,57 +38,6 @@ def test_dir() -> Path:
     pwd: Path = Path(os.path.dirname(os.path.realpath(__file__)))
 
     return pwd
-
-def _truncate_path(name: str, cutoff: str) -> str:
-    parts = Path(name).parts
-    i = parts.index(cutoff) + 1
-    return str(Path(*parts[i:]))
-
-@pytest.fixture(scope="session")
-def cosmo_definitions(tmp_path_factory) -> Path:
-    path = tmp_path_factory.mktemp("cosmo") / "definitions"
-    tag = "2.38.3-1"
-    name = f"eccodes_definitions.edzw-{tag}.tar.bz2"
-    url = f"https://opendata.dwd.de/weather/lib/grib/{name}"
-    response = requests.get(url)
-    response.raise_for_status()
-    with tarfile.open(name, "r:bz2", io.BytesIO(response.content)) as tar:
-        members = [
-            member.replace(name=_truncate_path(member.name, f"definitions.edzw-{tag}"))
-            for member in tar.getmembers()
-            if "definitions" in member.name
-        ]
-        tar.extractall(path, members=members, filter="data")
-
-    return path
-
-
-@pytest.fixture(scope="session")
-def mars_definitions(tmp_path_factory) -> Path:
-    path = tmp_path_factory.mktemp("mars") / "definitions"
-    name = "v0.0.2.tar.gz"
-    url = f"https://github.com/MeteoSwiss/eccodes-cosmo-mars/archive/refs/tags/{name}"
-    response = requests.get(url)
-    response.raise_for_status()
-    with tarfile.open(name, "r:gz", io.BytesIO(response.content)) as tar:
-        members = [
-            member.replace(name=_truncate_path(member.name, "definitions"))
-            for member in tar.getmembers()
-            if "definitions" in member.name
-        ]
-        tar.extractall(path, members=members, filter="data")
-
-    return path
-
-
-@pytest.fixture(scope="session", autouse=True)
-def eccodes_definitions(mars_definitions, cosmo_definitions):
-    import eccodes
-    vendor = eccodes.codes_definition_path()
-    definitions = f"{cosmo_definitions}:{mars_definitions}:{vendor}"
-    eccodes.codes_set_definitions_path(definitions)
-    os.environ["GRIB_DEFINITION_PATH"] = definitions
-    print(f"GRIB_DEFINITION_PATH: {os.environ['GRIB_DEFINITION_PATH']}")
 
 def _set_local_eccodes_install_prefix(config: dict):
     try:
