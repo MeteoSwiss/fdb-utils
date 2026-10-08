@@ -22,6 +22,8 @@ priority = "explicit"
 fdb-utils = "fdb_utils.main:app"
 
 [tool.poetry.dependencies]
+# eccodes, eccodeslib and pyfdb should be kept in sync with
+# the uenv ref in jenkins/Jenkinsfile.archive_status_base!
 python = ">=3.11"
 typer = "^0.16"
 eccodes = "^2.47"
