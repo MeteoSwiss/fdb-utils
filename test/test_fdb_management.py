@@ -18,6 +18,7 @@ def mock_fdb_wipe_exe(tmp_path, monkeypatch):
     fdb_wipe_exe = tmp_path / "bin" / "fdb-wipe"
     os.mkdir(tmp_path / "bin")
     fdb_wipe_exe.write_text("fake fdb-wipe executable content")
+    monkeypatch.delenv("FDB5_HOME", raising=False)
     monkeypatch.setenv("FDB5_DIR", str(tmp_path))
     return str(fdb_wipe_exe)
 
@@ -41,8 +42,9 @@ def test_wipe_fdb(mock_subprocess_run, mock_fdb_wipe_exe):
 
     wipe_fdb(forecasts)
 
-    assert mock_subprocess_run.called_once_with(
-        [mock_fdb_wipe_exe, "--doit", "--minimum-keys=", "date=20230101,time=0000"]
+    mock_subprocess_run.assert_called_once_with(
+        [mock_fdb_wipe_exe, "--doit", "--unsafe-wipe-all", "--minimum-keys=", "date=20230101,time=0000"],
+        check=True,
     )
 
 
@@ -53,13 +55,15 @@ def test_wipe_fdb_model(mock_subprocess_run, mock_fdb_wipe_exe):
 
     wipe_fdb(forecasts, model="icon-ch1-eps")
 
-    assert mock_subprocess_run.called_once_with(
+    mock_subprocess_run.assert_called_once_with(
         [
             mock_fdb_wipe_exe,
             "--doit",
+            "--unsafe-wipe-all",
             "--minimum-keys=",
             "date=20230101,time=0000,model=icon-ch1-eps",
-        ]
+        ],
+        check=True,
     )
 
 
@@ -94,7 +98,7 @@ def test_fdb_definitions(tmp_path: Path, data_dir: Path, fdb):
         "stream": "enfo",
         "date": "20230410",
         "step": "4m",
-        "time": "0900",
+        "time": "0600",
     }
 
     keys_in_fdb: list[dict] = [item["keys"] for item in fdb.list(request, True, True)]

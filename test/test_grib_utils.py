@@ -8,10 +8,10 @@ def test_extract_metadata_from_grib_file(data_dir):
     result = extract_metadata_from_grib_file(grib_file)
 
     expected = {
-        'date': '20230201',
-        'time': '0300',
-        'step': 7,
-        'number': 3,
+        'date': '20260710',
+        'time': '0600',
+        'step': 1,
+        'number': 1,
     }
 
     assert expected == result
